@@ -10,7 +10,7 @@
     .wrap { padding: 12px; max-width: 1000px; margin: 0 auto; }
     .topbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
     select, button {
-      padding: 10px 12px; border: 1px solid #ccc; background: #fff; border-radius: 10px;
+      padding: 10px 12px; border: 1px solid #ccc; background: #fff; border-radius: 10px; cursor: pointer;
     }
     .bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
     #info { font-size: 14px; opacity: .8; }
@@ -21,8 +21,8 @@
 <body>
   <div class="wrap">
     <div class="topbar">
-      <label for="figuras"><strong>Figura:</strong></label>
-      <select id="figuras" aria-label="Seleccionar figura">
+      <label for="selectorFiguras"><strong>Figura:</strong></label>
+      <select id="selectorFiguras" aria-label="Seleccionar figura">
         <option value="models/Cubo.glb">Cubo</option>
         <option value="models/Prisma.glb">Prisma</option>
       </select>
@@ -30,31 +30,16 @@
       <button id="btnAR" type="button">Ver en AR</button>
     </div>
 
-<label for="figura"><strong>Figura:</strong></label>
-<select id="figura">
-  <option value="models/Cubo.glb">Cubo</option>
-  <option value="models/Prisma.glb">Prisma</option>
-</select>
-
-<model-viewer id="mv"
-  src="models/Cubo.glb"
-  ar
-  ar-modes="scene-viewer webxr quick-look"
-  camera-controls
-  tone-mapping="neutral"
-  poster="poster.png"
-  shadow-intensity="1"
-  environment-image="legacy">
-</model-viewer>
-
-<script>
-  const mv = document.getElementById('mv');
-  const figura = document.getElementById('figura');
-
-  figura.addEventListener('change', () => {
-    mv.src = figura.value;
-  });
-</script>
+    <model-viewer id="mv"
+      src="models/Cubo.glb"
+      ar
+      ar-modes="scene-viewer webxr quick-look"
+      camera-controls
+      tone-mapping="neutral"
+      poster="poster.png"
+      shadow-intensity="1"
+      environment-image="legacy">
+    </model-viewer>
 
     <div class="bar">
       <button id="pp" type="button">Play/Pause</button>
@@ -65,47 +50,61 @@
   </div>
 
   <script>
+    // Referencias a elementos del DOM
     const mv = document.querySelector('#mv');
-    const sel = document.querySelector('#figuras');
+    const sel = document.querySelector('#selectorFiguras'); // Usamos el ID correcto
     const info = document.querySelector('#info');
+    const btnAR = document.querySelector('#btnAR');
+    const btnPP = document.querySelector('#pp');
+    const btnPrev = document.querySelector('#prev');
+    const btnNext = document.querySelector('#next');
 
     let clips = [];
     let i = 0;
 
+    // Función para actualizar lista de animaciones
     function refreshClips() {
       clips = mv.availableAnimations || [];
       i = 0;
 
       if (!clips.length) {
         info.textContent = 'Este modelo no trae animaciones.';
+        // Desactivar botones de animación si no hay clips
+        btnPP.disabled = true;
         return;
       }
 
-      // Selecciona el primer clip por defecto
+      btnPP.disabled = false;
+      // Selecciona el primer clip por defecto pero pausado
       mv.animationName = clips[0];
       mv.paused = true;
       info.textContent = `Animaciones: ${clips.join(' | ')} (actual: ${mv.animationName})`;
     }
 
-    // Cada vez que cargue un modelo, recalcula clips
+    // EVENTO 1: Carga del modelo
     mv.addEventListener('load', refreshClips);
 
-    // Cambiar figura (cambia el src del modelo)
+    // EVENTO 2: Cambio de Figura (Select)
     sel.addEventListener('change', () => {
+      // Cambiamos la fuente del modelo
       mv.src = sel.value;
+      
+      // Feedback visual
       info.textContent = 'Cargando modelo...';
       mv.paused = true;
     });
 
-    // Botón AR: dispara el botón interno de AR del componente
-    document.querySelector('#btnAR').addEventListener('click', () => {
-      // model-viewer crea un botón AR interno si tiene `ar`.
-      // requestFullscreen no aplica; aquí invocamos la acción AR del componente.
-      mv.activateAR();
+    // EVENTO 3: Botón AR manual
+    btnAR.addEventListener('click', () => {
+      if (mv.canActivateAR) {
+        mv.activateAR();
+      } else {
+        alert("Tu dispositivo no soporta AR o no está disponible en este navegador.");
+      }
     });
 
-    // Play/Pause
-    document.querySelector('#pp').addEventListener('click', () => {
+    // EVENTO 4: Controles de Animación
+    btnPP.addEventListener('click', () => {
       mv.paused = !mv.paused;
     });
 
@@ -118,8 +117,8 @@
       info.textContent = `Animaciones: ${clips.join(' | ')} (actual: ${mv.animationName})`;
     }
 
-    document.querySelector('#prev').addEventListener('click', () => setClip(i - 1));
-    document.querySelector('#next').addEventListener('click', () => setClip(i + 1));
+    btnPrev.addEventListener('click', () => setClip(i - 1));
+    btnNext.addEventListener('click', () => setClip(i + 1));
   </script>
 </body>
 </html>
