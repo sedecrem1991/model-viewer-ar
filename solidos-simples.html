@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Laboratorio de RA</title>
+  
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    /* --- ESTILOS GENERALES (FONDO LIMPIO) --- */
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: transparent; color: #333; }
+    .wrap { padding: 20px; max-width: 1000px; margin: 0 auto; }
+    
+    /* Barra superior */
+    .topbar { 
+      display: flex; gap: 15px; align-items: center; margin-bottom: 20px; 
+      background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0;
+    }
+    
+    select { 
+      padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; 
+      background: white; color: #1e293b; font-size: 16px; flex-grow: 1; 
+    }
+
+    /* --- ESTILO DE BOTONES (GRADIENTE LABORATORIO) --- */
+    .variant-btn, #btnAR { 
+      background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      color: #ffffff; font-family: 'Arial Black', sans-serif;
+      text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.5px;
+      padding: 12px 20px; border: none; border-radius: 8px;
+      border-bottom: 3px solid #3b0764; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer; transition: all 0.2s ease;
+    }
+
+    .variant-btn:hover, #btnAR:hover {
+      filter: brightness(1.3); transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(59, 7, 100, 0.3);
+    }
+
+    .variant-btn:active, #btnAR:active {
+      transform: translateY(2px); border-bottom: 1px solid #3b0764;
+    }
+
+    /* Resaltado para el botón seleccionado */
+    .variant-btn.active {
+      border: 2px solid #7c3aed;
+      border-bottom: 4px solid #7c3aed;
+      box-shadow: 0 0 12px rgba(124, 58, 237, 0.5);
+    }
+
+    /* Visor 3D (Transparente/Limpio) */
+    model-viewer { 
+      width: 100%; height: 55vh; background-color: #f1f5f9; 
+      border-radius: 16px; margin-bottom: 20px;
+    }
+
+    .bar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    
+    #info { 
+      margin-top: 20px; text-align: center; font-family: 'Segoe UI', sans-serif;
+      color: #64748b; font-size: 0.9em;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="wrap">
+
+    <div class="topbar">
+      <label for="selectorFiguras"><strong>MODELO:</strong></label>
+      <select id="selectorFiguras">
+        <option value="cubo">Cubo</option>
+        <option value="piramide">Pirámide</option>
+        <option value="hexagono">Hexágono</option>
+      </select>
+      <button id="btnAR" type="button">Ver en AR</button>
+    </div>
+
+    <model-viewer id="mv"
+      src="models/Cubo.glb" 
+      ar 
+      ar-modes="scene-viewer webxr quick-look" 
+      camera-controls 
+      tone-mapping="neutral" 
+      poster="poster.png" 
+      shadow-intensity="1" 
+      auto-rotate environment-image="legacy"> 
+      </model-viewer>
+
+    <div class="bar">
+      <button id="btnBase" class="variant-btn active" onclick="uiCargar('base', this)">Sólido (Base)</button>
+      <button id="btnVertices" class="variant-btn" onclick="uiCargar('vertices', this)">Vértices</button>
+      <button id="btnAristas" class="variant-btn" onclick="uiCargar('aristas', this)">Aristas</button>
+      <button id="btnCaras" class="variant-btn" onclick="uiCargar('caras', this)">Caras</button>
+    </div>
+
+    <div id="info">Selecciona una parte de la figura para inspeccionar.</div>
+  </div>
+
+  <script>
+    const mv = document.querySelector('#mv');
+    const sel = document.querySelector('#selectorFiguras');
+    const info = document.querySelector('#info');
+    const botones = document.querySelectorAll('.variant-btn');
+
+    const BIBLIOTECA_MODELOS = {
+        cubo: {
+            nombre: "Cubo",
+            base: "models/Cubo.glb",
+            vertices: "models/cubo_vertices.glb",
+            aristas: "models/cubo_aristas.glb",
+            caras: "models/cubo_caras.glb"
+        },
+        piramide: {
+            nombre: "Pirámide",
+            base: "models/Piramide.glb",
+            vertices: "models/piramide_vertices.glb",
+            aristas: "models/piramide_aristas.glb",
+            caras: "models/piramide_caras.glb"
+        },
+        hexagono: {
+            nombre: "Hexágono",
+            base: "models/hexagono.glb",
+            aristas: "models/hexagono_aristas.glb",
+            caras: "models/hexagono_caras.glb",
+            vertices: "models/hexagono_vertices.glb"
+        }
+    };
+
+    let figuraActiva = "cubo";
+
+    function uiCargar(tipo, elemento) {
+        botones.forEach(btn => btn.classList.remove('active'));
+        elemento.classList.add('active');
+        cargarVariante(tipo);
+    }
+
+    function cargarVariante(tipo) {
+        const datosFigura = BIBLIOTECA_MODELOS[figuraActiva];
+        if (datosFigura && datosFigura[tipo]) {
+            mv.src = datosFigura[tipo];
+            info.innerHTML = `Identifica <strong>${tipo.toUpperCase()}</strong> del <strong>${datosFigura.nombre.toUpperCase()}</strong>`;
+        }
+    }
+
+    sel.addEventListener('change', (e) => {
+        figuraActiva = e.target.value;
+        botones.forEach(btn => btn.classList.remove('active'));
+        document.querySelector('#btnBase').classList.add('active');
+        cargarVariante('base');
+    });
+
+    document.querySelector('#btnAR').addEventListener('click', () => {
+        if (mv.canActivateAR) mv.activateAR();
+        else alert("AR no compatible.");
+    });
+  </script>
+</body>
+</html>
