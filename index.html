@@ -30,7 +30,31 @@
       <button id="btnAR" type="button">Ver en AR</button>
     </div>
 
-    <model-viewer src="modelsCubo.glb" ar ar-modes="scene-viewer webxr quick-look" camera-controls tone-mapping="neutral" poster="poster.png" shadow-intensity="1" environment-image="legacy"> </model-viewer>
+<label for="figura"><strong>Figura:</strong></label>
+<select id="figura">
+  <option value="models/Cubo.glb">Cubo</option>
+  <option value="models/Prisma.glb">Prisma</option>
+</select>
+
+<model-viewer id="mv"
+  src="models/Cubo.glb"
+  ar
+  ar-modes="scene-viewer webxr quick-look"
+  camera-controls
+  tone-mapping="neutral"
+  poster="poster.png"
+  shadow-intensity="1"
+  environment-image="legacy">
+</model-viewer>
+
+<script>
+  const mv = document.getElementById('mv');
+  const figura = document.getElementById('figura');
+
+  figura.addEventListener('change', () => {
+    mv.src = figura.value;
+  });
+</script>
 
     <div class="bar">
       <button id="pp" type="button">Play/Pause</button>
