@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; }
+    .wrap { padding: 12px; max-width: 1000px; margin: 0 auto; }
+    .topbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+    select, button {
+      padding: 10px 12px; border: 1px solid #ccc; background: #fff; border-radius: 10px; cursor: pointer;
+    }
+    .bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+    #info { font-size: 14px; opacity: .8; }
+    model-viewer { width: 100%; height: 60vh; background: #f6f6f6; border-radius: 16px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <label for="selectorFiguras"><strong>Figura:</strong></label>
+      <select id="selectorFiguras">
+        <option value="models/Cubo.glb">Cubo</option>
+        <option value="models/Piramide.glb">Piramide</option>
+      </select>
+      <button id="btnAR" type="button">Ver en AR</button>
+    </div>
+
+    <model-viewer id="mv"
+      src="models/Cubo.glb"
+      ar
+      ar-modes="scene-viewer webxr quick-look"
+      camera-controls
+      tone-mapping="neutral"
+      shadow-intensity="1">
+    </model-viewer>
+
+    <div class="bar">
+      <button id="pp" type="button">Aristas (Sólido)</button>
+      <button id="prev" type="button">Vertices</button>
+      <button id="next" type="button">Caras</button>
+      <span id="info"></span>
+    </div>
+  </div>
+
+  <script>
+    // --- PASO 1: Referencias al DOM (Obligatorio primero) ---
+    const mv = document.querySelector('#mv');
+    const sel = document.querySelector('#selectorFiguras');
+    const info = document.querySelector('#info');
+    const btnAR = document.querySelector('#btnAR');
+    const btnPP = document.querySelector('#pp'); // Botón Aristas
+    const btnPrev = document.querySelector('#prev'); // Botón Vertices
+    const btnNext = document.querySelector('#next'); // Botón Caras
+
+    // --- PASO 2: Tu nueva lógica de intercambio ---
+    let figuraActual = "Cubo"; 
+
+    // Evento para el cambio en el menú desplegable
+    sel.addEventListener('change', () => {
+        mv.src = sel.value;
+        if (sel.value.includes("Cubo")) {
+            figuraActual = "Cubo";
+        } else if (sel.value.includes("Piramide")) {
+            figuraActual = "Piramide";
+        }
+        info.textContent = `Modelo base: ${figuraActual}`;
+    });
+
+    // Evento para el botón Vértices (Carga archivos específicos)
+    btnPrev.addEventListener('click', () => {
+        let archivoVertices = "";
+        if (figuraActual === "Cubo") {
+            archivoVertices = "models/Vertices_Cubo.glb";
+        } else if (figuraActual === "Piramide") {
+            archivoVertices = "models/Vertices_Piramide.glb";
+        }
+        mv.src = archivoVertices;
+        info.textContent = `Viendo: Vértices de ${figuraActual}`;
+    });
+
+    // Evento para el botón Aristas (Vuelve al sólido original)
+    btnPP.addEventListener('click', () => {
+        mv.src = sel.value; 
+        info.textContent = `Viendo: ${figuraActual} sólido`;
+    });
+
+    // Evento para el botón AR
+    btnAR.addEventListener('click', () => {
+      if (mv.canActivateAR) {
+        mv.activateAR();
+      } else {
+        alert("AR no disponible");
+      }
+    });
+
+    // Mensaje inicial
+    info.textContent = "Listo. Selecciona una figura.";
+  </script>
+</body>
+</html>
