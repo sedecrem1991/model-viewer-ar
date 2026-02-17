@@ -30,14 +30,7 @@
       <button id="btnAR" type="button">Ver en AR</button>
     </div>
 
-    <model-viewer id="mv"
-      src="models/cubo.glb"
-      camera-controls
-      ar
-      ar-modes="webxr scene-viewer quick-look"
-      shadow-intensity="1"
-      exposure="1">
-    </model-viewer>
+    <model-viewer src="modelsCubo.glb" ar ar-modes="scene-viewer webxr quick-look" camera-controls tone-mapping="neutral" poster="poster.png" shadow-intensity="1" environment-image="legacy"> </model-viewer>
 
     <div class="bar">
       <button id="pp" type="button">Play/Pause</button>
