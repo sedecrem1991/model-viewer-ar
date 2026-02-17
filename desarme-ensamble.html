@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Laboratorio RA - Desarme y Ensamble</title>
+  
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: transparent; color: #333; }
+    .wrap { padding: 20px; max-width: 1000px; margin: 0 auto; }
+    
+    .topbar { 
+      display: flex; gap: 15px; align-items: center; margin-bottom: 20px; 
+      background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0;
+    }
+    
+    select { 
+      padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; 
+      background: white; color: #1e293b; font-size: 16px; flex-grow: 1; 
+    }
+
+    /* BOTONES ESTILO LABORATORIO */
+    .variant-btn, #btnAR { 
+      background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      color: #ffffff; font-family: 'Arial Black', sans-serif;
+      text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.5px;
+      padding: 12px 25px; border: none; border-radius: 8px;
+      border-bottom: 3px solid #3b0764; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer; transition: all 0.2s ease;
+    }
+
+    .variant-btn:hover, #btnAR:hover { filter: brightness(1.3); transform: translateY(-2px); }
+    .variant-btn:active, #btnAR:active { transform: translateY(2px); border-bottom: 1px solid #3b0764; }
+
+    model-viewer { 
+      width: 100%; height: 55vh; background-color: #f1f5f9; 
+      border-radius: 16px; margin-bottom: 20px;
+    }
+
+    .bar { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+    
+    #info { 
+      margin-top: 20px; text-align: center; font-family: 'Segoe UI', sans-serif;
+      color: #64748b; font-size: 0.9em;
+    }
+
+    /* MODAL QR */
+    #modalQR { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; }
+    .modal-content { background:white; padding:30px; border-radius:15px; text-align:center; max-width:300px; position:relative; }
+  </style>
+</head>
+
+<body>
+
+  <div class="wrap">
+    <div class="topbar">
+      <label for="selectorFiguras"><strong>OBJETO:</strong></label>
+      <select id="selectorFiguras">
+        <option value="cubo">Cubo Interactivo</option>
+        <option value="piramide">Pirámide Interactiva</option>
+        <option value="hexagono">Hexágono Interactivo</option>
+      </select>
+      <button id="btnAR" type="button">Ver en AR</button>
+    </div>
+
+    <model-viewer id="mv"
+      src="models/desarme-ensamble/cubo-interactivo.glb" 
+      ar ar-modes="scene-viewer webxr quick-look" 
+      camera-controls tone-mapping="neutral" 
+      shadow-intensity="1"> 
+    </model-viewer>
+
+    <div class="bar">
+      <button id="btnArmar" class="variant-btn" type="button">Armar Objeto</button>
+      <button id="btnDesarmar" class="variant-btn" type="button">Desarmar Objeto</button>
+    </div>
+
+    <div id="info">Presiona un botón para ver la animación.</div>
+  </div>
+
+  <div id="modalQR">
+    <div class="modal-content">
+      <button onclick="cerrarQR()" style="position:absolute; top:10px; right:10px; border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
+      <h2 style="color:#1e1b4b; font-family:'Arial Black', sans-serif; font-size:1.2em;">¡Escanea para RA!</h2>
+      <img id="imgQR" src="" alt="QR Code" style="width:200px; height:200px; border:5px solid #f1f5f9;">
+      <p style="color:#64748b; font-size:0.8em; margin-top:10px;">Apunta con tu móvil para ver el proceso en tu espacio.</p>
+    </div>
+  </div>
+
+  <script>
+    const mv = document.querySelector('#mv');
+    const sel = document.querySelector('#selectorFiguras');
+    const info = document.querySelector('#info');
+    const imgQR = document.querySelector('#imgQR');
+    const modalQR = document.querySelector('#modalQR');
+
+    const BIBLIOTECA = {
+        cubo: { nombre: "Cubo", src: "models/desarme-ensamble/cubo-interactivo.glb" },
+        piramide: { nombre: "Pirámide", src: "models/desarme-ensamble/piramide-interactiva.glb" },
+        hexagono: { nombre: "Hexágono", src: "models/desarme-ensamble/hexagono-interactivo.glb" }
+    };
+
+    let animationTimer;
+
+    // --- FUNCIÓN CORREGIDA CON PROTECCIÓN ANTI-BUCLE ---
+    function ejecutarClip(inicio, fin) {
+        if (animationTimer) clearInterval(animationTimer);
+        
+        // 1. Aseguramos que el visor sepa que NO debe hacer loop
+        mv.loop = false;
+        
+        mv.currentTime = inicio;
+        mv.play();
+
+        animationTimer = setInterval(() => {
+            const tiempoActual = mv.currentTime;
+
+            // CONDICIÓN 1: Llegamos al final deseado
+            const llegoAlFinal = tiempoActual >= fin;
+
+            // CONDICIÓN 2 (CRÍTICA): El video se reinició solo (saltó a 0) porque llegó al final del archivo
+            // Si el tiempo actual es MENOR que el inicio que le dimos, significa que dio la vuelta.
+            const seReinicio = tiempoActual < inicio && tiempoActual < 0.5;
+
+            if (llegoAlFinal || seReinicio) {
+                mv.pause();
+                mv.currentTime = fin; // Forzamos visualmente el frame final
+                clearInterval(animationTimer);
+            }
+        }, 10); // Revisamos cada 10ms
+    }
+
+    // Eventos de botones basados en 30 FPS de 3ds Max
+    document.querySelector('#btnArmar').onclick = () => {
+        info.innerHTML = "Estado: <strong>ARMANDO...</strong>";
+        // Frame 0 a 100 -> 0s a 3.33s
+        ejecutarClip(0, 3.33);
+    };
+
+    document.querySelector('#btnDesarmar').onclick = () => {
+        info.innerHTML = "Estado: <strong>DESARMANDO...</strong>";
+        // Frame 110 a 200 -> 3.66s a 6.66s
+        ejecutarClip(3.66, 6.66);
+    };
+
+    sel.addEventListener('change', (e) => {
+        const figura = e.target.value;
+        mv.src = BIBLIOTECA[figura].src;
+        info.textContent = "Modelo cargado: " + BIBLIOTECA[figura].nombre;
+        if (animationTimer) clearInterval(animationTimer);
+    });
+
+    function cerrarQR() { modalQR.style.display = 'none'; }
+
+    document.querySelector('#btnAR').addEventListener('click', () => {
+        const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (esMovil) {
+            if (mv.canActivateAR) mv.activateAR();
+            else alert("AR no compatible.");
+        } else {
+            imgQR.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href)}&color=0f172a`;
+            modalQR.style.display = 'flex';
+        }
+    });
+  </script>
+</body>
+</html>
