@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Laboratorio RA - Desarrollo y Plegado</title>
+  
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    /* --- ESTILOS GENERALES (IGUAL QUE ANTES) --- */
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: transparent; color: #333; }
+    .wrap { padding: 20px; max-width: 1000px; margin: 0 auto; }
+    
+    .topbar { 
+      display: flex; gap: 15px; align-items: center; margin-bottom: 20px; 
+      background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0;
+    }
+    
+    select { 
+      padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; 
+      background: white; color: #1e293b; font-size: 16px; flex-grow: 1; 
+    }
+
+    /* BOTONES ESTILO LABORATORIO */
+    .variant-btn, #btnAR, .check-btn { 
+      background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      color: #ffffff; font-family: 'Arial Black', sans-serif;
+      text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.5px;
+      padding: 12px 25px; border: none; border-radius: 8px;
+      border-bottom: 3px solid #3b0764; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer; transition: all 0.2s ease;
+    }
+
+    .variant-btn:hover, #btnAR:hover, .check-btn:hover { filter: brightness(1.3); transform: translateY(-2px); }
+    .variant-btn:active, #btnAR:active, .check-btn:active { transform: translateY(2px); border-bottom: 1px solid #3b0764; }
+
+    /* Estilo botón inactivo/secundario */
+    .variant-btn.secondary {
+      background: #cbd5e1; border-bottom: 3px solid #94a3b8; color: #475569;
+    }
+    .variant-btn.active {
+      border: 2px solid #7c3aed; border-bottom: 4px solid #7c3aed;
+      box-shadow: 0 0 12px rgba(124, 58, 237, 0.5);
+    }
+
+    model-viewer { 
+      width: 100%; height: 50vh; background-color: #f1f5f9; 
+      border-radius: 16px; margin-bottom: 20px;
+    }
+
+    .bar { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-bottom: 30px; }
+
+    /* --- ESTILOS DEL MINI-RETO --- */
+    .quiz-container {
+      background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 20px; margin-top: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .quiz-title {
+      font-family: 'Arial Black', sans-serif; color: #1e1b4b; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;
+    }
+    .question-row {
+      display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 15px;
+    }
+    .question-label { font-weight: 600; color: #334155; }
+    
+    .feedback-msg { font-weight: bold; margin-left: 10px; font-size: 0.9em; display: none; }
+    .feedback-msg.correct { color: #16a34a; display: inline; }
+    .feedback-msg.error { color: #dc2626; display: inline; }
+
+    /* MODAL QR */
+    #modalQR { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; }
+    .modal-content { background:white; padding:30px; border-radius:15px; text-align:center; max-width:300px; position:relative; }
+  </style>
+</head>
+
+<body>
+
+  <div class="wrap">
+
+    <div class="topbar">
+      <label for="selectorFiguras"><strong>OBJETO:</strong></label>
+      <select id="selectorFiguras">
+        <option value="cubo">Cubo</option>
+        <option value="piramide">Piramide</option>
+        <option value="hexagono">Hexágono</option>
+        </select>
+
+        
+      <button id="btnAR" type="button">Ver en AR</button>
+    </div>
+
+    <model-viewer id="mv"
+      src="models/desarrollo-plegado/cubo_net.glb" 
+      ar ar-modes="scene-viewer webxr quick-look" 
+      camera-controls tone-mapping="neutral" 
+      shadow-intensity="1" auto-rotate> 
+    </model-viewer>
+
+    <div class="bar">
+      <button id="btn2D" class="variant-btn active" onclick="cambiarModo('2D')">Ver Plano (2D)</button>
+      <button id="btn3D" class="variant-btn secondary" onclick="cambiarModo('3D')">Ver Plegado (3D)</button>
+    </div>
+
+    <div class="quiz-container">
+      <h3 class="quiz-title">🧠 Mini-Reto Espacial</h3>
+      <p style="font-size: 0.9em; color: #64748b; margin-bottom: 20px;">Observa el modelo y responde:</p>
+
+      <div class="question-row">
+        <label class="question-label">1. ¿Qué cara es OPUESTA a la cara "Rojo"?</label>
+        <div>
+            <select id="q1">
+                <option value="">Selecciona...</option>
+                <option value="B">Cian</option>
+                <option value="C">Amarilla</option>
+                <option value="D">Rosa</option>
+                <option value="E">Verde</option>
+                <option value="F">Azul</option>
+                <option value="G">Naranja</option>
+                <option value="H">Morado</option>
+            </select>
+            <span id="f1" class="feedback-msg"></span>
+        </div>
+      </div>
+
+      <div class="question-row">
+        <label class="question-label">2. A la cara "Amarilla", ¿cuántas caras la tocan?</label>
+        <div>
+            <select id="q2">
+                <option value="">Selecciona...</option>
+                <option value="1">1 cara</option>
+                <option value="2">2 caras</option>
+                <option value="3">3 caras</option>
+                <option value="4">4 caras</option>
+                <option value="5">5 caras</option>
+            </select>
+            <span id="f2" class="feedback-msg"></span>
+        </div>
+      </div>
+
+      <div class="question-row" style="border:none;">
+        <label class="question-label">3. En el desarrollo 2D, ¿qué cara funciona como "Base"?</label>
+        <div>
+            <select id="q3">
+                <option value="">Selecciona...</option>
+                <option value="B">Naranja</option>
+                <option value="C">Cian</option>
+                <option value="D">Amarilla</option>
+                <option value="E">Rosa</option>
+                <option value="F">Verde</option>
+                <option value="G">Azul</option>
+                <option value="H">Rojo</option>
+                <option value="J">Morado</option>                
+            </select>
+            <span id="f3" class="feedback-msg"></span>
+        </div>
+      </div>
+
+      <button class="check-btn" style="width:100%" onclick="verificarRespuestas()">✅ Comprobar Respuestas</button>
+    </div>
+
+  </div>
+
+  <div id="modalQR">
+    <div class="modal-content">
+      <button onclick="cerrarQR()" style="position:absolute; top:10px; right:10px; border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
+      <h2 style="color:#1e1b4b; font-family:'Arial Black', sans-serif; font-size:1.2em;">¡Escanea para RA!</h2>
+      <img id="imgQR" src="" alt="QR Code" style="width:200px; height:200px; border:5px solid #f1f5f9;">
+      <p style="color:#64748b; font-size:0.8em; margin-top:10px;">Apunta con tu móvil para ver el proceso en tu espacio.</p>
+    </div>
+  </div>
+
+  <script>
+    const mv = document.querySelector('#mv');
+    const sel = document.querySelector('#selectorFiguras');
+    const btn2D = document.getElementById('btn2D');
+    const btn3D = document.getElementById('btn3D');
+    
+    // --- CONFIGURACIÓN DE MODELOS Y RESPUESTAS ---
+    // Asegúrate de crear estos archivos GLB
+    const BIBLIOTECA = {
+        cubo: { 
+            net: "models/desarrollo-plegado/cubo_net.glb", 
+            folded: "models/desarrollo-plegado/cubo_plegado.glb",
+            // Respuestas correctas (Ajusta según tu textura real)
+            respuestas: { q1: "D", q2: "4", q3: "D" } 
+        },
+        piramide: {
+            net: "models/desarrollo-plegado/piramide_net.glb",
+            folded: "models/desarrollo-plegado/piramide_plegado.glb",
+            respuestas: { q1: "E", q2: "3", q3: "G" } // Ejemplo
+        },
+        hexagono: {
+            net: "models/desarrollo-plegado/hexagono_net.glb",
+            folded: "models/desarrollo-plegado/hexagono_plegado.glb",
+            respuestas: { q1: "H", q2: "4", q3: "J" } // Ejemplo
+        }
+    };
+
+    let figuraActiva = "cubo";
+    let modoActual = "net"; // 'net' (2D) o 'folded' (3D)
+
+    // --- LÓGICA DE CAMBIO 2D / 3D ---
+    function cambiarModo(modo) {
+        const datos = BIBLIOTECA[figuraActiva];
+        
+        if (modo === '2D') {
+            mv.src = datos.net;
+            modoActual = 'net';
+            btn2D.classList.add('active');
+            btn2D.classList.remove('secondary');
+            btn3D.classList.remove('active');
+            btn3D.classList.add('secondary');
+            // Opcional: ajustar cámara para vista superior
+            mv.cameraOrbit = "0deg 0deg 105%"; 
+        } else {
+            mv.src = datos.folded;
+            modoActual = 'folded';
+            btn3D.classList.add('active');
+            btn3D.classList.remove('secondary');
+            btn2D.classList.remove('active');
+            btn2D.classList.add('secondary');
+            mv.cameraOrbit = "45deg 55deg 105%"; // Vista isométrica
+        }
+    }
+
+    // --- CAMBIO DE FIGURA ---
+    sel.addEventListener('change', (e) => {
+        figuraActiva = e.target.value;
+        // Recargar en el modo que estaba activo
+        const datos = BIBLIOTECA[figuraActiva];
+        mv.src = (modoActual === 'net') ? datos.net : datos.folded;
+        
+        // Limpiar feedback anterior
+        document.querySelectorAll('.feedback-msg').forEach(el => el.innerHTML = "");
+        document.querySelectorAll('.quiz-container select').forEach(el => el.value = "");
+    });
+
+    // --- VERIFICACIÓN DE RESPUESTAS (MINI-RETO) ---
+    function verificarRespuestas() {
+        const correctas = BIBLIOTECA[figuraActiva].respuestas;
+        
+        // Pregunta 1
+        validarIndividual('q1', correctas.q1, "¡Correcto! Es la cara opuesta.");
+        // Pregunta 2
+        validarIndividual('q2', correctas.q2, "¡Exacto!.");
+        // Pregunta 3
+        validarIndividual('q3', correctas.q3, "¡Bien! Esa es la base de la figura");
+    }
+
+    function validarIndividual(idPregunta, respuestaCorrecta, msgExito) {
+        const input = document.getElementById(idPregunta);
+        const feedback = document.getElementById('f' + idPregunta.substring(1)); // f1, f2, f3
+        
+        if (input.value === respuestaCorrecta) {
+            feedback.innerHTML = "✅ " + msgExito;
+            feedback.className = "feedback-msg correct";
+        } else {
+            feedback.innerHTML = "❌ Revisa el modelo 3D.";
+            feedback.className = "feedback-msg error";
+        }
+    }
+
+    // --- LÓGICA QR / AR (IGUAL QUE SIEMPRE) ---
+    const modalQR = document.querySelector('#modalQR');
+    const imgQR = document.querySelector('#imgQR');
+    function cerrarQR() { modalQR.style.display = 'none'; }
+
+    document.querySelector('#btnAR').addEventListener('click', () => {
+        const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (esMovil) {
+            if (mv.canActivateAR) mv.activateAR();
+            else alert("AR no compatible.");
+        } else {
+            imgQR.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href)}&color=0f172a`;
+            modalQR.style.display = 'flex';
+        }
+    });
+  </script>
+</body>
+</html>
