@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Laboratorio RA - Calibración Inicial</title>
+  
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: #f8fafc; color: #1e293b; }
+    .wrap { padding: 20px; max-width: 800px; margin: 0 auto; text-align: center; }
+    
+    /* Encabezado Estilo Laboratorio */
+    .header { 
+      background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%); 
+      padding: 25px; border-radius: 15px; margin-bottom: 25px; color: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    /* Visor 3D */
+    model-viewer { 
+      width: 100%; height: 60vh; background-color: #ffffff; 
+      border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+    }
+
+    /* --- ESTILO DE BOTONES (GRADIENTE LABORATORIO) --- */
+    .variant-btn, #btnAR { 
+      background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      color: #ffffff; font-family: 'Arial Black', sans-serif;
+      text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.5px;
+      padding: 12px 20px; border: none; border-radius: 8px;
+      border-bottom: 3px solid #3b0764; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer; transition: all 0.2s ease;
+    } 
+
+    .variant-btn:hover, #btnAR:hover {
+      filter: brightness(1.3); transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(59, 7, 100, 0.3);
+    }
+
+    .variant-btn:active, #btnAR:active {
+      transform: translateY(2px); border-bottom: 1px solid #3b0764;
+    }
+
+    /* Resaltado para el botón seleccionado */
+    .variant-btn.active {
+      border: 2px solid #7c3aed;
+      border-bottom: 4px solid #7c3aed;
+      box-shadow: 0 0 12px rgba(124, 58, 237, 0.5);
+    }
+
+    /* Estilos para el Modal del QR */
+    #modalQR { 
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; 
+    }
+    .modal-content { 
+      background: white; padding: 35px; border-radius: 20px; text-align: center; 
+      max-width: 320px; position: relative; 
+    }
+    .close-modal { position: absolute; top: 10px; right: 15px; font-size: 30px; cursor: pointer; border: none; background: none; color: #94a3b8; }
+  </style>
+</head>
+
+<body>
+
+  <div class="wrap">
+
+
+    <model-viewer id="mv"
+      src="Models/calibracion.glb" 
+      ar ar-modes="scene-viewer webxr quick-look" 
+      camera-controls tone-mapping="neutral" 
+      shadow-intensity="1" auto-rotate
+      environment-image="legacy">
+    </model-viewer>
+
+      <button id="btnAR" type="button">Ver en AR</button>
+    
+    <div style="margin-top: 25px; color: #64748b; font-size: 0.95em;">
+      <p style="margin:8px 0 0 0; opacity: 0.9;"><strong>Interactúa con la tetera para probar el visor 3D.</strong></p>
+      <p>💻 <strong>En PC:</strong> Rota con el ratón y usa la rueda para zoom.</p>
+      <p>📱 <strong>En Móvil:</strong> Toca el botón para proyectar el objeto en tu mesa.</p>
+    </div>
+  </div>
+
+  <div id="modalQR">
+    <div class="modal-content">
+      <button class="close-modal" onclick="cerrarQR()">&times;</button>
+      <h2 style="margin-top:0; color:#1e1b4b;">¡Escanea el código!</h2>
+      <img id="imgQR" src="" alt="Código QR" style="width: 220px; height: 220px; border: 4px solid #f1f5f9; border-radius: 10px;">
+      <p style="font-size: 0.85em; color: #64748b; margin-top: 15px;">
+        Apunta la cámara de tu teléfono para abrir esta experiencia en Realidad Aumentada.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const mv = document.querySelector('#mv');
+    const modalQR = document.querySelector('#modalQR');
+    const imgQR = document.querySelector('#imgQR');
+
+    function cerrarQR() { modalQR.style.display = 'none'; }
+
+    // Lógica para detectar el dispositivo y mostrar QR o activar AR
+    document.querySelector('#btnAR').addEventListener('click', () => {
+      const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (esMovil) {
+        // En móvil, lanza la cámara de Realidad Aumentada directamente
+        if (mv.canActivateAR) {
+          mv.activateAR();
+        } else {
+          alert("Tu dispositivo no es compatible con Realidad Aumentada.");
+        }
+      } else {
+        // En PC, genera un QR con la dirección actual
+        const urlActual = window.location.href;
+        imgQR.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(urlActual)}&color=0f172a`;
+        modalQR.style.display = 'flex';
+      }
+    });
+
+    // Cerrar modal al hacer clic fuera de la caja blanca
+    window.onclick = function(event) {
+      if (event.target == modalQR) cerrarQR();
+    }
+  </script>
+
+</body>
+</html>
