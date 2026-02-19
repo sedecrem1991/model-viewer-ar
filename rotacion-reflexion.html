@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Laboratorio RA - Comparación Rotación vs. Reflexión</title>
+
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: transparent; color: #333; }
+    .wrap { padding: 20px; max-width: 1000px; margin: 0 auto; }
+
+    .topbar {
+      display: flex; gap: 15px; align-items: center; margin-bottom: 20px;
+      background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0;
+      flex-wrap: wrap;
+    }
+
+    label { font-weight: 700; font-size: 0.85em; color: #0f172a; text-transform: uppercase; white-space: nowrap; }
+
+    select {
+      padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;
+      background: white; color: #1e293b; font-size: 16px; flex: 1 1 260px;
+    }
+
+    .btn-lab {
+      background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      color: #ffffff; font-family: 'Arial Black', sans-serif;
+      text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.5px;
+      padding: 12px 20px; border: none; border-radius: 8px;
+      border-bottom: 3px solid #3b0764; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer; transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .btn-lab:hover { filter: brightness(1.3); transform: translateY(-2px); }
+    .btn-lab:active { transform: translateY(2px); border-bottom: 1px solid #3b0764; }
+
+    .btn-lab.secondary{
+      background: #334155;
+      border-bottom: 3px solid #0f172a;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+    }
+
+    .panel-title{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px 12px 10px;
+    }
+
+    .badge{
+      display:inline-block;
+      background: rgba(15, 23, 42, 0.9);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    .state{
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+      text-align: right;
+      flex: 1 1 auto;
+    }
+
+    .viewer-wrap{ position: relative; }
+
+    model-viewer{
+      width: 100%;
+      height: 360px;
+      background: #f1f5f9;
+      border-radius: 14px;
+      /* ayuda en algunos navegadores embebidos */
+      touch-action: none;
+    }
+
+    .ar-corner{
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      z-index: 5;
+
+      background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      color: #ffffff;
+      font-family: 'Arial Black', sans-serif;
+      text-transform: uppercase;
+      font-size: 0.68em;
+      letter-spacing: 0.6px;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 10px;
+      border-bottom: 3px solid #3b0764;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .ar-corner:hover { filter: brightness(1.25); transform: translateY(-2px); }
+    .ar-corner:active { transform: translateY(2px); border-bottom: 1px solid #3b0764; }
+
+    .bar{
+      display:flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .hint{
+      margin-top: 16px;
+      text-align: center;
+      color: #64748b;
+      font-size: 0.9em;
+    }
+
+    #modalQR { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; }
+    .modal-content { background:white; padding:30px; border-radius:15px; text-align:center; max-width:320px; position:relative; }
+
+    @media (max-width: 820px){
+      .grid{ grid-template-columns: 1fr; }
+      model-viewer{ height: 52vh; }
+      .ar-corner{ right: 14px; bottom: 14px; padding: 12px 14px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <div class="topbar">
+      <label for="selectorFiguras">OBJETO:</label>
+      <select id="selectorFiguras">
+        <option value="asimetrico">Sólido asimétrico</option>
+        <option value="cubo">Cubo</option>
+        <option value="piramide">Pirámide</option>
+        <option value="hexagono">Hexágono</option>
+      </select>
+
+      <button class="btn-lab secondary" id="btnResetAll" type="button">Reiniciar todo</button>
+    </div>
+
+    <div class="grid">
+
+      <!-- IZQUIERDA: ROTACIÓN -->
+      <section class="panel">
+        <div class="panel-title">
+          <span class="badge">Rotación</span>
+          <span class="state" id="stateRot">Orientación: 0°</span>
+        </div>
+
+        <div class="viewer-wrap">
+          <model-viewer id="mvRot"
+            src="models/rotacion-reflexion/asimetrico.glb"
+            ar ar-modes="scene-viewer webxr quick-look"
+            camera-controls
+            tone-mapping="neutral"
+            shadow-intensity="1"
+            camera-orbit="35deg 65deg 3m"
+            camera-target="0m 0.25m 0m"
+            min-camera-orbit="auto auto 0.4m"
+            max-camera-orbit="auto auto 8m"
+            orientation="0deg 0deg 0deg">
+          </model-viewer>
+
+          <button class="ar-corner" id="btnAR_Rot" type="button">VER EN AR</button>
+        </div>
+
+        <div class="bar">
+          <button class="btn-lab" id="btnRotar" type="button">Rotar</button>
+        </div>
+      </section>
+
+      <!-- DERECHA: REFLEXIÓN (ALTERNAR 2 GLB) -->
+      <section class="panel">
+        <div class="panel-title">
+          <span class="badge">Reflexión</span>
+          <span class="state" id="stateRef">Estado: normal</span>
+        </div>
+
+        <div class="viewer-wrap">
+          <model-viewer id="mvRef"
+            src="models/rotacion-reflexion/asimetrico.glb"
+            ar ar-modes="scene-viewer webxr quick-look"
+            camera-controls
+            tone-mapping="neutral"
+            shadow-intensity="1"
+            camera-orbit="35deg 65deg 3m"
+            camera-target="0m 0.25m 0m"
+            min-camera-orbit="auto auto 0.4m"
+            max-camera-orbit="auto auto 8m"
+            orientation="0deg 0deg 0deg">
+          </model-viewer>
+
+          <button class="ar-corner" id="btnAR_Ref" type="button">VER EN AR</button>
+        </div>
+
+        <div class="bar">
+          <button class="btn-lab" id="btnReflejar" type="button">Reflejar</button>
+        </div>
+      </section>
+
+    </div>
+
+    <p class="hint">
+      <strong>Tip</strong>: En la experiencia de Realidad Aumentada (AR) no hay controles de reflexión: el visor derecho abre en AR el modelo normal o reflejado según lo que elijas aquí.
+    </p>
+
+  </div>
+
+  <!-- MODAL QR (PC) -->
+  <div id="modalQR">
+    <div class="modal-content">
+      <button onclick="cerrarQR()" style="position:absolute; top:10px; right:10px; border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
+      <h2 style="color:#1e1b4b; font-family:'Arial Black', sans-serif; font-size:1.15em;">¡Escanea para abrir el laboratorio!</h2>
+      <img id="imgQR" src="" alt="QR Code" style="width:200px; height:200px; border:5px solid #f1f5f9; margin-top:10px;">
+      <p style="color:#64748b; font-size:0.85em; margin-top:12px;">Abre este enlace desde tu celular para usar Realidad Aumentada.</p>
+    </div>
+  </div>
+
+  <script>
+    const mvRot = document.getElementById('mvRot');
+    const mvRef = document.getElementById('mvRef');
+    const selector = document.getElementById('selectorFiguras');
+
+    const stateRot = document.getElementById('stateRot');
+    const stateRef = document.getElementById('stateRef');
+
+    const modalQR = document.getElementById('modalQR');
+    const imgQR = document.getElementById('imgQR');
+
+    const BASE = "models/rotacion-reflexion/";
+
+    const BIBLIOTECA = {
+      asimetrico: { nombre: "Sólido asimétrico", normal: BASE + "asimetrico.glb", espejo: BASE + "asimetrico-reflejado.glb" },
+      cubo:       { nombre: "Cubo",              normal: BASE + "cubo.glb",       espejo: BASE + "cubo-reflejado.glb" },
+      piramide:   { nombre: "Pirámide",          normal: BASE + "piramide.glb",   espejo: BASE + "piramide-reflejado.glb" },
+      hexagono:   { nombre: "Hexágono",          normal: BASE + "hexagono.glb",   espejo: BASE + "hexagono-reflejado.glb" }
+    };
+
+    // Estado
+    let xDeg = 0;              // rotación (visor izquierdo) -> eje X
+    let reflected = false;     // visor derecho: normal/espejo
+    let currentKey = selector.value;
+
+    // Cámara 3/4 + distancia inicial (para que el zoom pueda ir hacia adentro y hacia afuera)
+    const DEFAULT_ORBIT  = "35deg 65deg 3m";
+    const DEFAULT_TARGET = "0m 0.25m 0m";
+
+    function resetCamera(mv){
+      mv.cameraOrbit = DEFAULT_ORBIT;
+      mv.cameraTarget = DEFAULT_TARGET;
+    }
+
+    function setOrientationRot(){
+      mvRot.orientation = `${xDeg}deg 0deg 0deg`; // X Y Z
+      stateRot.textContent = `Orientación: ${((xDeg % 360) + 360) % 360}°`;
+    }
+
+    function onceLoaded(mv, fn){
+      if (mv.model && mv.model.scene) fn();
+      else mv.addEventListener('load', fn, { once: true });
+    }
+
+    function aplicarModelo(key){
+      currentKey = key;
+      const item = BIBLIOTECA[key] || BIBLIOTECA.asimetrico;
+
+      mvRot.src = item.normal;
+      mvRef.src = item.normal;
+
+      xDeg = 0;
+      reflected = false;
+
+      mvRot.orientation = "0deg 0deg 0deg";
+      mvRef.orientation = "0deg 0deg 0deg";
+
+      resetCamera(mvRot);
+      resetCamera(mvRef);
+
+      setOrientationRot();
+      stateRef.textContent = "Estado: normal";
+    }
+
+    function resetAll(){
+      // seguridad: toma el selector actual (por si acaso)
+      currentKey = selector.value;
+
+      const item = BIBLIOTECA[currentKey] || BIBLIOTECA.asimetrico;
+
+      // 1) Reset de estados
+      xDeg = 0;
+      reflected = false;
+
+      // 2) Reset inmediato (esto debe verse SIEMPRE)
+      mvRot.orientation = "0deg 0deg 0deg";
+      mvRef.orientation = "0deg 0deg 0deg";
+      resetCamera(mvRot);
+      resetCamera(mvRef);
+      setOrientationRot();
+      stateRef.textContent = "Estado: normal";
+
+      // 3) Forzar que ambos queden en GLB normal (si estabas en “espejo”, aquí sí o sí vuelve)
+      mvRot.src = item.normal;
+      mvRef.src = item.normal;
+
+      // 4) Si el src efectivamente recarga, re-aplica después del load (por si model-viewer reajusta)
+      mvRot.addEventListener('load', () => {
+        mvRot.orientation = "0deg 0deg 0deg";
+        resetCamera(mvRot);
+        setOrientationRot();
+      }, { once: true });
+
+      mvRef.addEventListener('load', () => {
+        mvRef.orientation = "0deg 0deg 0deg";
+        resetCamera(mvRef);
+        stateRef.textContent = "Estado: normal";
+      }, { once: true });
+    }
+
+
+    document.getElementById('btnResetAll').addEventListener('click', resetAll);
+
+    // --- ROTAR (eje X) ---
+    document.getElementById('btnRotar').addEventListener('click', () => {
+      xDeg = (xDeg - 90);
+      setOrientationRot();
+    });
+
+    // --- REFLEJAR (derecho: alterna 2 GLB) ---
+    document.getElementById('btnReflejar').addEventListener('click', () => {
+      const item = BIBLIOTECA[currentKey] || BIBLIOTECA.asimetrico;
+
+      if (!item.espejo) {
+        alert("Falta el GLB reflejado (espejo). Agrégalo en la BIBLIOTECA.");
+        return;
+      }
+
+      reflected = !reflected;
+      mvRef.src = reflected ? item.espejo : item.normal;
+
+      onceLoaded(mvRef, () => {
+        mvRef.orientation = "0deg 0deg 0deg";
+        resetCamera(mvRef);
+      });
+
+      stateRef.textContent = reflected ? "Estado: reflejado" : "Estado: normal";
+    });
+
+    // Selector
+    selector.addEventListener('change', (e) => aplicarModelo(e.target.value));
+
+    // --- FIX ZOOM CON RUEDA EN MOODLE/IFRAMES ---
+    // Evita que la página haga scroll cuando el mouse está sobre el visor (la rueda queda para zoom).
+    [mvRot, mvRef].forEach(mv => {
+      mv.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+    });
+
+    // --- AR POR VISOR + QR EN PC ---
+    function abrirAR(mv){
+      const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (esMovil) {
+        if (mv?.canActivateAR) mv.activateAR();
+        else alert("Tu dispositivo no es compatible con Realidad Aumentada.");
+      } else {
+        imgQR.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href)}&color=0f172a`;
+        modalQR.style.display = 'flex';
+      }
+    }
+
+    document.getElementById('btnAR_Rot').addEventListener('click', () => abrirAR(mvRot));
+    document.getElementById('btnAR_Ref').addEventListener('click', () => abrirAR(mvRef));
+
+    function cerrarQR(){ modalQR.style.display = 'none'; }
+    window.cerrarQR = cerrarQR;
+
+    // Inicial
+    aplicarModelo(selector.value);
+  </script>
+</body>
+</html>
