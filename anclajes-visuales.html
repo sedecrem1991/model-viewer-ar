@@ -183,7 +183,20 @@
         <select id="ejSel"></select>
 
         <!-- ✅ AR queda alineado a la izquierda (junto al selector) -->
-        <button id="btnAR">VER EN AR</button>
+        
+        <button id="btnAR" type="button">Ver en AR</button>
+
+      <div id="modalQR" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:white; padding:30px; border-radius:15px; text-align:center; max-width:300px; position:relative;">
+    <button onclick="cerrarQR()" style="position:absolute; top:10px; right:10px; border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
+    <h2 style="color:#1e1b4b; font-family:'Arial Black', sans-serif; font-size:1.2em; margin-bottom:15px;">¡Escanea para ver en RA!</h2>
+    
+    <img id="imgQR" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=TU_URL_DE_GITHUB_AQUI" alt="QR Code" style="width:200px; height:200px; border:5px solid #f1f5f9;">
+    
+    <p style="color:#64748b; font-size:0.9em; margin-top:15px;">Apunta con la cámara de tu celular para abrir el laboratorio.</p>
+  </div>
+</div>
+
       </div>
     </div>
 
@@ -301,6 +314,33 @@
     });
 
     init();
+
+    // --- REEMPLAZA TU BLOQUE DE #btnAR POR ESTE ---
+
+        function cerrarQR() {
+        modalQR.style.display = 'none';
+    }
+    
+    document.querySelector('#btnAR').addEventListener('click', () => {
+        // 1. Detectamos si es un dispositivo móvil
+        const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        if (esMovil) {
+            // Si es móvil, intentamos abrir AR
+            if (mv.canActivateAR) {
+                mv.activateAR();
+            } else {
+                alert("Tu móvil no es compatible con Realidad Aumentada.");
+            }
+        } else {
+            // Si es PC, generamos el QR con la URL actual y mostramos el modal
+            const urlActual = window.location.href;
+            imgQR.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(urlActual)}&color=0f172a`;
+            
+            modalQR.style.display = 'flex';
+        }
+    });
+
   </script>
 </body>
 </html>
