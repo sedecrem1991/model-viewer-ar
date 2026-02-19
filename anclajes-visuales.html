@@ -213,6 +213,7 @@
         ar 
         ar-modes="scene-viewer webxr quick-look" 
         camera-controls 
+        orientation="0deg 0deg 0deg"
         tone-mapping="neutral" 
         poster="poster.png" 
         shadow-intensity="1" 
@@ -313,7 +314,7 @@
     ejSel.addEventListener('change', render);
 
     document.getElementById('resetBtn').addEventListener('click', () => {
-      mv.cameraOrbit = "0deg 75deg auto";
+      mv.cameraOrbit = "0deg 60deg auto";
       mv.cameraTarget = "0m 0m 0m";
     });
 
