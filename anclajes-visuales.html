@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Laboratorio de RA</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    /* --- ESTILOS BASE (LIMPIOS) --- */
+    body { 
+        margin: 0; 
+        font-family: 'Segoe UI', sans-serif; 
+        background-color: transparent; 
+        color: #333; 
+    }
+
+    .wrap { 
+        padding: 20px; 
+        max-width: 1000px; 
+        margin: 0 auto; 
+    }
+
+    /* --- BARRA SUPERIOR --- */
+    .topbar { 
+      display: flex; 
+      gap: 15px; 
+      align-items: center; 
+      margin-bottom: 20px; 
+      background: #f8fafc; 
+      padding: 12px; 
+      border-radius: 12px; 
+      border: 1px solid #e2e8f0;
+    }
+
+    .selector-group{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex: 1;
+      width: 100%;
+    }
+
+    label { 
+      font-weight: 700; 
+      font-size: 0.85em; 
+      color: #333; 
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* ✅ Objeto se mantiene normal */
+    #objSel{
+      flex: 0 0 180px; /* ancho fijo razonable */
+      min-width: 150px;
+    }
+
+    /* ✅ Ejercicio ocupa todo el ancho disponible */
+    #ejSel{
+      flex: 1 1 auto;
+      width: 100%;
+      min-width: 240px;
+    }
+
+    select { 
+      padding: 10px; 
+      border: 1px solid #cbd5e1; 
+      border-radius: 8px; 
+      background: white; 
+      color: #1e293b; 
+      font-size: 16px; 
+    }
+
+    /* ✅ Botón AR alineado a la izquierda (pegado al select Ejercicio) */
+    #btnAR{
+      margin-left: 0;
+      white-space: nowrap;
+    }
+
+    /* --- VISOR 3D --- */
+    .viewer-container {
+      position: relative;
+      width: 100%;
+      height: 520px;
+      background-color: #cccccc;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    model-viewer { width: 100%; height: 100%; background: transparent; }
+
+    /* --- GUÍA OBJETIVO --- */
+    .ghost-box {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 180px;
+      aspect-ratio: 1/1;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(0,0,0,0.05);
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+    }
+    .ghost-box img { width: 100%; height: 85%; object-fit: contain; }
+    .ghost-label { font-size: 10px; font-weight: bold; color: white; background: #334155; padding: 3px 8px; border-radius: 20px; margin-top: 5px; }
+
+    .tag-info {
+      position: absolute; top: 15px; left: 15px;
+      background: rgba(15, 23, 42, 0.8); color: white;
+      padding: 6px 12px; border-radius: 8px; font-size: 12px; z-index: 10;
+    }
+
+    /* --- BOTONES --- */
+    .button-bar { 
+      display: flex; 
+      gap: 10px; 
+      justify-content: center; 
+      margin-bottom: 10px;
+    }
+
+    .btn-lab, #btnAR { 
+      background: #0f172a; 
+      color: white;
+      font-family: 'Arial Black', sans-serif;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #btnAR { background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); }
+
+    .btn-lab:hover, #btnAR:hover { transform: translateY(-2px); filter: brightness(1.3); }
+    .btn-lab.active {
+      outline: 2px solid #7c3aed;
+      box-shadow: 0 0 12px rgba(124, 58, 237, 0.5);
+    }
+
+    .hint { text-align: center; color: #94a3b8; font-size: 0.85em; margin-top: 15px; }
+
+    /* ✅ Responsive: en móvil apila */
+    @media (max-width: 740px){
+      .topbar{
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .selector-group{
+        flex-wrap: wrap;
+      }
+      #objSel, #ejSel{
+        flex: 1 1 100%;
+        min-width: 0;
+      }
+      #btnAR{
+        width: 100%;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="wrap">
+
+    <div class="topbar">
+      <div class="selector-group">
+        <label>Objeto:</label>
+        <select id="objSel"></select>
+
+        <label>Ejercicio:</label>
+        <select id="ejSel"></select>
+
+        <!-- ✅ AR queda alineado a la izquierda (junto al selector) -->
+        <button id="btnAR">VER EN AR</button>
+      </div>
+    </div>
+
+    <div class="viewer-container">
+      <div class="tag-info" id="tag">Cubo — Vista inicial</div>
+
+      <div class="ghost-box" id="ghostBox">
+        <img id="ghostImg" src="" alt="Guía">
+        <div class="ghost-label">Guía objetivo</div>
+      </div>
+
+      <model-viewer id="mv"
+        src="" 
+        ar ar-modes="webxr scene-viewer quick-look"
+        camera-controls shadow-intensity="1"
+        touch-action="pan-y">
+      </model-viewer>
+    </div>
+
+    <!-- ✅ Botones inferiores: Reiniciar + Guía -->
+    <div class="button-bar">
+      <button class="btn-lab" id="resetBtn" style="background:#334155">Reiniciar</button>
+      <button class="btn-lab" onclick="toggleGhost()">Mostrar/Ocultar Guía</button>
+    </div>
+
+    <p class="hint">Rota el modelo hasta que coincida exactamente con la guía objetivo.</p>
+
+  </div>
+
+  <script>
+    const mv = document.querySelector('#mv');
+    const objSel = document.querySelector('#objSel');
+    const ejSel = document.querySelector('#ejSel');
+    const ghostImg = document.querySelector('#ghostImg');
+    const tag = document.querySelector('#tag');
+
+    const DATA = {
+      cubo: {
+        nombre: "Cubo",
+        modelo: "models/anclajes-visuales/cubo.glb",
+        ejercicios: [
+          { titulo: "Vista inicial", img: "models/anclajes-visuales/base-cubo.png" },
+          { titulo: "Ejercicio 1", img: "models/anclajes-visuales/a-cubo.png" },
+          { titulo: "Ejercicio 2", img: "models/anclajes-visuales/b-cubo.png" },
+          { titulo: "Ejercicio 3", img: "models/anclajes-visuales/c-cubo.png" },
+          { titulo: "Ejercicio 4", img: "models/anclajes-visuales/d-cubo.png" },
+          { titulo: "Ejercicio 5", img: "models/anclajes-visuales/e-cubo.png" }
+        ]
+      },
+      piramide: {
+        nombre: "Pirámide",
+        modelo: "models/anclajes-visuales/piramide.glb",
+        ejercicios: [
+          { titulo: "Vista inicial", img: "models/anclajes-visuales/base-piramide.png" },
+          { titulo: "Ejercicio 1", img: "models/anclajes-visuales/a-piramide.png" },
+          { titulo: "Ejercicio 2", img: "models/anclajes-visuales/b-piramide.png" },
+          { titulo: "Ejercicio 3", img: "models/anclajes-visuales/c-piramide.png" },
+          { titulo: "Ejercicio 4", img: "models/anclajes-visuales/d-piramide.png" },
+          { titulo: "Ejercicio 5", img: "models/anclajes-visuales/e-piramide.png" }
+        ]
+      },
+      hexagono: {
+        nombre: "Hexágono",
+        modelo: "models/anclajes-visuales/hexagono.glb",
+        ejercicios: [
+          { titulo: "Vista inicial", img: "models/anclajes-visuales/base-hexagono.png" },
+          { titulo: "Ejercicio 1", img: "models/anclajes-visuales/a-hexagono.png" },
+          { titulo: "Ejercicio 2", img: "models/anclajes-visuales/b-hexagono.png" },
+          { titulo: "Ejercicio 3", img: "models/anclajes-visuales/c-hexagono.png" },
+          { titulo: "Ejercicio 4", img: "models/anclajes-visuales/d-hexagono.png" },
+          { titulo: "Ejercicio 5", img: "models/anclajes-visuales/e-hexagono.png" }
+        ]
+      }
+    };
+
+    function init() {
+      Object.keys(DATA).forEach(key => {
+        let opt = document.createElement('option');
+        opt.value = key; opt.textContent = DATA[key].nombre;
+        objSel.appendChild(opt);
+      });
+      updateEjercicios();
+    }
+
+    function updateEjercicios() {
+      const obj = DATA[objSel.value];
+      ejSel.innerHTML = "";
+      obj.ejercicios.forEach((ej, i) => {
+        let opt = document.createElement('option');
+        opt.value = i; opt.textContent = ej.titulo;
+        ejSel.appendChild(opt);
+      });
+      render();
+    }
+
+    function render() {
+      const obj = DATA[objSel.value];
+      const ej = obj.ejercicios[ejSel.value];
+      mv.src = obj.modelo;
+      ghostImg.src = ej.img;
+      tag.textContent = `${obj.nombre} — ${ej.titulo}`;
+    }
+
+    function toggleGhost() {
+      const box = document.getElementById('ghostBox');
+      box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    objSel.addEventListener('change', updateEjercicios);
+    ejSel.addEventListener('change', render);
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      mv.cameraOrbit = "0deg 75deg auto";
+      mv.cameraTarget = "0m 0m 0m";
+    });
+
+    init();
+  </script>
+</body>
+</html>
