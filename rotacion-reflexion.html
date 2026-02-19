@@ -8,16 +8,12 @@
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
   <style>
-    /* ✅ Para que el contenido embebido en iframe NO genere scroll interno */
-    html, body { height: 100%; }
-    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background-color: transparent; color: #333; }
-
-    /* ✅ Reducimos espacios verticales para que quepa completo en iframe */
-    .wrap { padding: 12px; max-width: 1000px; margin: 0 auto; }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: transparent; color: #333; }
+    .wrap { padding: 20px; max-width: 1000px; margin: 0 auto; }
 
     .topbar {
-      display: flex; gap: 12px; align-items: center; margin-bottom: 12px;
-      background: #f8fafc; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2e8f0;
+      display: flex; gap: 15px; align-items: center; margin-bottom: 20px;
+      background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0;
       flex-wrap: wrap;
     }
 
@@ -32,7 +28,7 @@
       background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
       color: #ffffff; font-family: 'Arial Black', sans-serif;
       text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.5px;
-      padding: 10px 16px; border: none; border-radius: 8px;
+      padding: 12px 20px; border: none; border-radius: 8px;
       border-bottom: 3px solid #3b0764; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       cursor: pointer; transition: all 0.2s ease;
       white-space: nowrap;
@@ -49,7 +45,7 @@
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      gap: 16px;
       align-items: start;
     }
 
@@ -57,7 +53,7 @@
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 16px;
-      padding: 10px;
+      padding: 12px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
     }
 
@@ -66,7 +62,7 @@
       align-items:center;
       justify-content: space-between;
       gap: 10px;
-      padding: 6px 8px 10px 8px;
+      padding: 8px 10px 12px 10px;
     }
 
     .badge{
@@ -91,12 +87,12 @@
 
     .viewer-wrap{ position: relative; }
 
-    /* ✅ Altura responsiva con tope para evitar que el contenido desborde el iframe */
     model-viewer{
       width: 100%;
-      height: clamp(260px, 34vh, 340px);
+      height: 360px;
       background: #f1f5f9;
       border-radius: 14px;
+      /* ayuda en algunos navegadores embebidos */
       touch-action: none;
     }
 
@@ -129,24 +125,22 @@
       gap: 10px;
       justify-content: center;
       flex-wrap: wrap;
-      margin-top: 10px;
+      margin-top: 12px;
     }
 
     .hint{
-      margin-top: 10px;
+      margin-top: 16px;
       text-align: center;
       color: #64748b;
-      font-size: 0.85em;
-      line-height: 1.25;
+      font-size: 0.9em;
     }
 
     #modalQR { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; }
     .modal-content { background:white; padding:30px; border-radius:15px; text-align:center; max-width:320px; position:relative; }
 
-    /* ✅ En móvil/iframe angosto: 1 columna, pero SIN usar 52vh (que inflaba el contenido) */
     @media (max-width: 820px){
       .grid{ grid-template-columns: 1fr; }
-      model-viewer{ height: clamp(280px, 38vh, 360px); }
+      model-viewer{ height: 52vh; }
       .ar-corner{ right: 14px; bottom: 14px; padding: 12px 14px; }
     }
   </style>
@@ -183,7 +177,7 @@
             camera-controls
             tone-mapping="neutral"
             shadow-intensity="1"
-            camera-orbit="35deg 65deg 3m"
+            camera-orbit="35deg 65deg 2.2m"
             camera-target="0m 0.25m 0m"
             min-camera-orbit="auto auto 0.4m"
             max-camera-orbit="auto auto 8m"
@@ -212,7 +206,7 @@
             camera-controls
             tone-mapping="neutral"
             shadow-intensity="1"
-            camera-orbit="35deg 65deg 3m"
+            camera-orbit="35deg 65deg 2.2m"
             camera-target="0m 0.25m 0m"
             min-camera-orbit="auto auto 0.4m"
             max-camera-orbit="auto auto 8m"
@@ -265,11 +259,13 @@
       hexagono:   { nombre: "Hexágono",          normal: BASE + "hexagono.glb",   espejo: BASE + "hexagono-reflejado.glb" }
     };
 
+    // Estado
     let xDeg = 0;              // rotación (visor izquierdo) -> eje X
     let reflected = false;     // visor derecho: normal/espejo
     let currentKey = selector.value;
 
-    const DEFAULT_ORBIT  = "35deg 65deg 3m";
+    // Cámara 3/4 + distancia inicial (para que el zoom pueda ir hacia adentro y hacia afuera)
+    const DEFAULT_ORBIT  = "35deg 65deg 2.2m";
     const DEFAULT_TARGET = "0m 0.25m 0m";
 
     function resetCamera(mv){
@@ -308,12 +304,16 @@
     }
 
     function resetAll(){
+      // seguridad: toma el selector actual (por si acaso)
       currentKey = selector.value;
+
       const item = BIBLIOTECA[currentKey] || BIBLIOTECA.asimetrico;
 
+      // 1) Reset de estados
       xDeg = 0;
       reflected = false;
 
+      // 2) Reset inmediato (esto debe verse SIEMPRE)
       mvRot.orientation = "0deg 0deg 0deg";
       mvRef.orientation = "0deg 0deg 0deg";
       resetCamera(mvRot);
@@ -321,9 +321,11 @@
       setOrientationRot();
       stateRef.textContent = "Estado: normal";
 
+      // 3) Forzar que ambos queden en GLB normal (si estabas en “espejo”, aquí sí o sí vuelve)
       mvRot.src = item.normal;
       mvRef.src = item.normal;
 
+      // 4) Si el src efectivamente recarga, re-aplica después del load (por si model-viewer reajusta)
       mvRot.addEventListener('load', () => {
         mvRot.orientation = "0deg 0deg 0deg";
         resetCamera(mvRot);
@@ -339,11 +341,13 @@
 
     document.getElementById('btnResetAll').addEventListener('click', resetAll);
 
+    // --- ROTAR (eje X) ---
     document.getElementById('btnRotar').addEventListener('click', () => {
       xDeg = (xDeg - 90);
       setOrientationRot();
     });
 
+    // --- REFLEJAR (derecho: alterna 2 GLB) ---
     document.getElementById('btnReflejar').addEventListener('click', () => {
       const item = BIBLIOTECA[currentKey] || BIBLIOTECA.asimetrico;
 
@@ -363,13 +367,16 @@
       stateRef.textContent = reflected ? "Estado: reflejado" : "Estado: normal";
     });
 
+    // Selector
     selector.addEventListener('change', (e) => aplicarModelo(e.target.value));
 
-    // Evita que la página haga scroll cuando el mouse está sobre el visor (rueda = zoom)
+    // --- FIX ZOOM CON RUEDA EN MOODLE/IFRAMES ---
+    // Evita que la página haga scroll cuando el mouse está sobre el visor (la rueda queda para zoom).
     [mvRot, mvRef].forEach(mv => {
       mv.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
     });
 
+    // --- AR POR VISOR + QR EN PC ---
     function abrirAR(mv){
       const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (esMovil) {
@@ -387,6 +394,7 @@
     function cerrarQR(){ modalQR.style.display = 'none'; }
     window.cerrarQR = cerrarQR;
 
+    // Inicial
     aplicarModelo(selector.value);
   </script>
 </body>
