@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Explorador Transparente - Visor RA</title>
+
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: transparent; color: #0f172a; }
+    .wrap { padding: 18px; max-width: 1000px; margin: 0 auto; }
+
+    .topbar{
+      display:flex; gap: 12px; align-items:center; margin-bottom: 14px;
+      background:#f8fafc; padding: 12px; border-radius: 12px; border:1px solid #e2e8f0;
+      flex-wrap: wrap;
+    }
+    .title{
+      font-weight: 900; letter-spacing: .4px; text-transform: uppercase;
+      font-size: 0.9em; color:#0f172a;
+    }
+    .spacer{ flex: 1 1 auto; }
+
+    select{
+      padding: 10px 12px;
+      border:1px solid #cbd5e1;
+      border-radius: 10px;
+      background: #fff;
+      color:#0f172a;
+      font-weight: 700;
+      min-width: 220px;
+    }
+
+    .btn{
+      background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      color:#fff; font-family:'Arial Black', sans-serif;
+      text-transform: uppercase; font-size:0.75em; letter-spacing:0.5px;
+      padding: 12px 16px; border:none; border-radius: 10px;
+      border-bottom: 3px solid #3b0764; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor:pointer; transition: all .2s ease; white-space: nowrap;
+    }
+    .btn:hover{ filter: brightness(1.15); transform: translateY(-2px); }
+    .btn:active{ transform: translateY(2px); border-bottom: 1px solid #3b0764; }
+
+    .panel{
+      background:#fff; border: 1px solid #e2e8f0; border-radius: 16px;
+      padding: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
+    }
+
+    .panel-title{
+      display:flex; align-items:center; justify-content: space-between; gap: 10px;
+      padding: 6px 8px 10px 8px;
+    }
+    .badge{
+      display:inline-block;
+      background: rgba(15, 23, 42, 0.9);
+      color:#fff; font-size: 11px; font-weight: 900;
+      letter-spacing: 0.6px; text-transform: uppercase;
+      padding: 6px 10px; border-radius: 999px;
+    }
+    .state{
+      font-size: 12px; color:#64748b; font-weight: 700; text-align:right; flex: 1 1 auto;
+    }
+
+    .viewer-wrap{ position: relative; }
+    model-viewer{
+      width: 100%;
+      height: 420px;
+      background:#f1f5f9;
+      border-radius: 14px;
+      touch-action: none;
+    }
+
+    .actions{
+      display:flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .btn.secondary{
+      background:#334155;
+      border-bottom: 3px solid #0f172a;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .btn.active{
+      outline: 3px solid rgba(59, 7, 100, 0.25);
+      filter: brightness(1.05);
+    }
+
+    /* Modal QR (PC) */
+    #modalQR { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; }
+    .modal-content { background:white; padding:26px; border-radius:15px; text-align:center; max-width:340px; position:relative; }
+    .modal-content h2{ margin: 0 0 10px 0; color:#1e1b4b; font-family:'Arial Black', sans-serif; font-size: 1.1em; }
+    .modal-content p{ margin: 10px 0 0 0; color:#64748b; font-size:0.9em; line-height: 1.3em; }
+    .close{
+      position:absolute; top:10px; right:10px; border:none; background:none;
+      font-size:22px; cursor:pointer; color:#0f172a;
+    }
+
+    @media (max-width: 900px){
+      model-viewer{ height: 46vh; }
+      select{ min-width: 180px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <!-- BARRA SUPERIOR -->
+    <div class="topbar">
+      <div class="title">OBJETO</div>
+
+      <select id="selObjeto" aria-label="Seleccionar objeto">
+        <option value="cubo" selected>Cubo</option>
+        <option value="piramide">Pirámide</option>
+        <option value="hexagono">Hexágono</option>
+      </select>
+
+      <div class="spacer"></div>
+
+      <button class="btn" id="btnAR" type="button">VER EN AR</button>
+    </div>
+
+    <!-- VISOR -->
+    <section class="panel">
+      <div class="panel-title">
+        <span class="badge" id="badgeObj">CUBO</span>
+        <span class="state" id="state">Modo: transparente</span>
+      </div>
+
+      <div class="viewer-wrap">
+        <model-viewer id="mv"
+          src="models/explorador-transparente/cubo-transparente.glb"
+          ar
+          ar-modes="scene-viewer webxr quick-look"
+          camera-controls
+          tone-mapping="neutral"
+          shadow-intensity="0"
+          camera-orbit="35deg 65deg 2.2m"
+          camera-target="0m 0.25m 0m">
+        </model-viewer>
+      </div>
+
+      <!-- BOTONES INFERIORES -->
+      <div class="actions">
+        <button class="btn secondary" id="btnOpaco" type="button">OPACO</button>
+        <button class="btn active" id="btnTransp" type="button">TRANSPARENTE</button>
+        <button class="btn secondary" id="btnVista" type="button">VISTA RÁPIDA</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL QR (PC) -->
+  <div id="modalQR">
+    <div class="modal-content">
+      <button class="close" onclick="cerrarQR()" aria-label="Cerrar">&times;</button>
+      <h2>¡Escanea para abrir en tu celular!</h2>
+      <img id="imgQR" src="" alt="Código QR" style="width:220px; height:220px; border:6px solid #f1f5f9; border-radius:10px;">
+      <p>Abre el enlace desde tu celular para ver el modelo en Realidad Aumentada.</p>
+    </div>
+  </div>
+
+  <script>
+    const mv = document.getElementById('mv');
+    const selObjeto = document.getElementById('selObjeto');
+    const badgeObj = document.getElementById('badgeObj');
+    const state = document.getElementById('state');
+
+    const btnOpaco = document.getElementById('btnOpaco');
+    const btnTransp = document.getElementById('btnTransp');
+    const btnVista = document.getElementById('btnVista');
+    const btnAR = document.getElementById('btnAR');
+
+    const modalQR = document.getElementById('modalQR');
+    const imgQR = document.getElementById('imgQR');
+
+    const BASE = "models/explorador-transparente/";
+    const MODOS = { opaco: "opaco", transparente: "transparente" };
+
+    // Vistas predefinidas (sin “ejercicio de rotación”)
+    const VISTAS = [
+      { name: "Frontal",  orbit: "0deg 75deg 2.2m",  target: "0m 0.25m 0m" },
+      { name: "Lateral",  orbit: "90deg 75deg 2.2m", target: "0m 0.25m 0m" },
+      { name: "Superior", orbit: "0deg 15deg 2.4m",  target: "0m 0.25m 0m" }
+    ];
+    let vistaIdx = 0;
+
+    let modoActual = MODOS.transparente; // default
+    let objetoActual = "cubo"; // default
+
+    function setActive(btn, active){
+      btn.classList.toggle('active', !!active);
+      btn.classList.toggle('secondary', !active);
+    }
+
+    function updateState(){
+      badgeObj.textContent = objetoActual.toUpperCase();
+      state.textContent = `Modo: ${modoActual}`;
+    }
+
+    function buildSrc(){
+      // ej: cubo-opaco.glb / cubo-transparente.glb
+      return `${BASE}${objetoActual}-${modoActual}.glb`;
+    }
+
+    function loadModel(){
+      mv.src = buildSrc();
+      updateState();
+    }
+
+    // Cambio de objeto
+    selObjeto.addEventListener('change', () => {
+      objetoActual = selObjeto.value;
+      vistaIdx = 0;
+      loadModel();
+    });
+
+    // Botones modo
+    btnOpaco.addEventListener('click', () => {
+      modoActual = MODOS.opaco;
+      setActive(btnOpaco, true);
+      setActive(btnTransp, false);
+      loadModel();
+    });
+
+    btnTransp.addEventListener('click', () => {
+      modoActual = MODOS.transparente;
+      setActive(btnTransp, true);
+      setActive(btnOpaco, false);
+      loadModel();
+    });
+
+    // Vista rápida
+    btnVista.addEventListener('click', () => {
+      const v = VISTAS[vistaIdx % VISTAS.length];
+      mv.cameraOrbit = v.orbit;
+      mv.cameraTarget = v.target;
+      state.textContent = `Vista: ${v.name} · Modo: ${modoActual}`;
+      vistaIdx++;
+    });
+
+    // AR: móvil abre AR; PC muestra QR con la URL de esta página
+    function abrirAR(){
+      const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (esMovil) {
+        if (mv?.canActivateAR) mv.activateAR();
+        else alert("Tu dispositivo no es compatible con Realidad Aumentada.");
+      } else {
+        // QR de la página actual (para que el celular abra el mismo visor)
+        imgQR.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(window.location.href)}&color=0f172a`;
+        modalQR.style.display = 'flex';
+      }
+    }
+
+    btnAR.addEventListener('click', abrirAR);
+
+    function cerrarQR(){ modalQR.style.display = 'none'; }
+    window.cerrarQR = cerrarQR;
+
+    // Inicial
+    loadModel();
+
+    // Evita scroll con la rueda del mouse sobre el visor (PC)
+    mv.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+  </script>
+</body>
+</html>
