@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Laboratorio de RA</title>
+
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    /* --- ESTILOS GENERALES (FONDO LIMPIO) --- */
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: transparent; color: #333; }
+    .wrap { padding: 20px; max-width: 1000px; margin: 0 auto; }
+
+    /* Barra superior */
+    .topbar {
+      display: flex; gap: 15px; align-items: center; margin-bottom: 20px;
+      background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0;
+      flex-wrap: wrap;
+    }
+
+    .qbox { display:flex; align-items:center; gap:10px; flex: 1 1 auto; min-width: 260px; }
+
+    select {
+      padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;
+      background: white; color: #1e293b; font-size: 16px; flex-grow: 1;
+    }
+
+    /* --- ESTILO DE BOTÓN AR (GRADIENTE LABORATORIO) --- */
+    #btnAR {
+      background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      color: #ffffff; font-family: 'Arial Black', sans-serif;
+      text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.5px;
+      padding: 12px 20px; border: none; border-radius: 8px;
+      border-bottom: 3px solid #3b0764; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer; transition: all 0.2s ease;
+      flex: 0 0 auto;
+    }
+
+    #btnAR:hover {
+      filter: brightness(1.3); transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(59, 7, 100, 0.3);
+    }
+
+    #btnAR:active { transform: translateY(2px); border-bottom: 1px solid #3b0764; }
+
+    /* Visor 3D */
+    model-viewer {
+      width: 100%; height: 55vh; background-color: #f1f5f9;
+      border-radius: 16px;
+    }
+
+    #info {
+      margin-top: 14px; text-align: center; font-family: 'Segoe UI', sans-serif;
+      color: #64748b; font-size: 0.9em;
+    }
+
+    /* Modal QR (PC) */
+    #modalQR {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,0.8); z-index:1000;
+      align-items:center; justify-content:center;
+      padding: 20px;
+    }
+    #modalQR .card {
+      background:white; padding:30px; border-radius:15px;
+      text-align:center; max-width:320px; width: 100%;
+      position:relative;
+    }
+    #modalQR .close {
+      position:absolute; top:10px; right:10px;
+      border:none; background:none; font-size:20px; cursor:pointer;
+    }
+    #modalQR h2 {
+      color:#1e1b4b; font-family:'Arial Black', sans-serif;
+      font-size:1.2em; margin: 0 0 15px;
+    }
+    #imgQR { width:200px; height:200px; border:5px solid #f1f5f9; border-radius: 10px; }
+    #modalQR p { color:#64748b; font-size:0.9em; margin-top:15px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <div class="topbar">
+      <div class="qbox">
+        <label for="selectorPreguntas"><strong>PREGUNTA:</strong></label>
+
+        <!-- Ajusta la cantidad de opciones hasta Punto N -->
+        <select id="selectorPreguntas" aria-label="Seleccionar pregunta">
+          <option value="1">Punto 1</option>
+          <option value="2">Punto 2</option>
+          <option value="3">Punto 3</option>
+          <option value="4">Punto 4</option>
+          <option value="5">Punto 5</option>
+          <!-- ... hasta Punto N -->
+        </select>
+      </div>
+
+      <button id="btnAR" type="button">Ver en AR</button>
+    </div>
+
+    <model-viewer id="mv"
+      src="actividad-1/punto1.glb"
+      ar
+      ar-modes="scene-viewer webxr quick-look"
+      camera-controls
+      tone-mapping="neutral"
+      poster="poster.png"
+      shadow-intensity="1"
+      auto-rotate
+      environment-image="legacy">
+    </model-viewer>
+
+    <div id="info">Selecciona una pregunta para cargar el modelo correspondiente.</div>
+  </div>
+
+  <!-- Modal QR (PC) -->
+  <div id="modalQR">
+    <div class="card">
+      <button class="close" type="button" aria-label="Cerrar" onclick="cerrarQR()">&times;</button>
+      <h2>¡Escanea para ver en RA!</h2>
+      <img id="imgQR" src="" alt="Código QR para abrir el laboratorio" />
+      <p>Apunta con la cámara de tu celular para abrir el laboratorio.</p>
+    </div>
+  </div>
+
+  <script>
+    const mv = document.getElementById('mv');
+    const selectorPreguntas = document.getElementById('selectorPreguntas');
+    const info = document.getElementById('info');
+
+    const btnAR = document.getElementById('btnAR');
+    const modalQR = document.getElementById('modalQR');
+    const imgQR = document.getElementById('imgQR');
+
+    function cerrarQR() { modalQR.style.display = 'none'; }
+
+    // IMPORTANTE:
+    // - Si tu HTML está en la RAÍZ del sitio (ej: https://.../index.html), esta ruta funciona:
+    //   "mod-1/actividad-1/punto{n}.glb"
+    // - Si tu HTML está DENTRO de /mod-1/actividad-1/, entonces cambia BASE_PATH a "./"
+    const BASE_PATH = "actividad-1/"; // cambia a "./" si el html está dentro de esa carpeta
+
+    function cargarPregunta(n) {
+      const ruta = `${BASE_PATH}punto${n}.glb`;
+      mv.src = ruta;
+      info.textContent = `Mostrando: Punto ${n}`;
+    }
+
+    // Carga inicial
+    cargarPregunta(selectorPreguntas.value);
+
+    // Cambio por selección
+    selectorPreguntas.addEventListener('change', (e) => cargarPregunta(e.target.value));
+
+    // Botón Ver en AR (igual que antes)
+    btnAR.addEventListener('click', () => {
+      const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (esMovil) {
+        if (mv.canActivateAR) mv.activateAR();
+        else alert("Tu móvil no es compatible con Realidad Aumentada.");
+      } else {
+        const urlActual = window.location.href;
+        imgQR.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(urlActual)}&color=0f172a`;
+        modalQR.style.display = 'flex';
+      }
+    });
+  </script>
+</body>
+</html>
