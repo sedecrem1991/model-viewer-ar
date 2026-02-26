@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Laboratorio RA - Oclusión Real</title>
+
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: transparent; color: #0f172a; }
+    .wrap { padding: 18px; max-width: 1000px; margin: 0 auto; }
+
+    .topbar{
+      display:flex; gap: 12px; align-items:center; margin-bottom: 14px;
+      background:#f8fafc; padding: 12px; border-radius: 12px; border:1px solid #e2e8f0;
+      flex-wrap: wrap;
+    }
+    .title{
+      font-weight: 900; letter-spacing: .4px; text-transform: uppercase;
+      font-size: 0.9em; color:#0f172a;
+    }
+    .spacer{ flex: 1 1 auto; }
+
+    select{
+      padding: 10px 12px;
+      border:1px solid #cbd5e1;
+      border-radius: 10px;
+      background: #fff;
+      color:#0f172a;
+      font-weight: 700;
+      min-width: 240px;
+    }
+
+    .btn{
+      background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      color:#fff; font-family:'Arial Black', sans-serif;
+      text-transform: uppercase; font-size:0.75em; letter-spacing:0.5px;
+      padding: 12px 16px; border:none; border-radius: 10px;
+      border-bottom: 3px solid #3b0764; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor:pointer; transition: all .2s ease; white-space: nowrap;
+    }
+    .btn:hover{ filter: brightness(1.15); transform: translateY(-2px); }
+    .btn:active{ transform: translateY(2px); border-bottom: 1px solid #3b0764; }
+
+    .btn.secondary{
+      background:#334155;
+      border-bottom: 3px solid #0f172a;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    .panel{
+      background:#fff; border: 1px solid #e2e8f0; border-radius: 16px;
+      padding: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
+    }
+
+    .viewer-container{
+      position: relative;
+      width: 100%;
+      height: 520px;
+      background:#f1f5f9;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    model-viewer{
+      width:100%;
+      height:100%;
+      background: transparent;
+      touch-action: none;
+    }
+
+    /* Guía (visor pequeño) en esquina superior derecha */
+    .ghost-box{
+      position:absolute;
+      top: 14px;
+      right: 14px;
+      width: 180px;
+      aspect-ratio: 1/1;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      display:flex;
+      flex-direction: column;
+      align-items:center;
+      padding: 10px;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+    }
+    .ghost-box img{
+      width:100%;
+      height: 85%;
+      object-fit: contain;
+    }
+    .ghost-label{
+      font-size: 10px;
+      font-weight: 900;
+      color: #ffffff;
+      background: #334155;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .ghost-box.hidden{ display:none; }
+
+    /* Estado (etiqueta) esquina superior izquierda */
+    .tag-info{
+      position:absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(15, 23, 42, 0.82);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 800;
+      z-index: 10;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+
+    .actions{
+      display:flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    /* Modal QR (PC) */
+    #modalQR { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; }
+    .modal-content { background:white; padding:26px; border-radius:15px; text-align:center; max-width:340px; position:relative; }
+    .modal-content h2{ margin: 0 0 10px 0; color:#1e1b4b; font-family:'Arial Black', sans-serif; font-size: 1.1em; }
+    .modal-content p{ margin: 10px 0 0 0; color:#64748b; font-size:0.9em; line-height: 1.3em; }
+    .close{
+      position:absolute; top:10px; right:10px; border:none; background:none;
+      font-size:22px; cursor:pointer; color:#0f172a;
+    }
+
+    @media (max-width: 900px){
+      .viewer-container{ height: 46vh; }
+      select{ min-width: 180px; }
+      .ghost-box{ width: 150px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <!-- BARRA SUPERIOR -->
+    <div class="topbar">
+      <div class="title">OBJETO</div>
+
+      <select id="selEjemplo" aria-label="Seleccionar ejemplo">
+        <option value="ejemplo-1" selected>Ejemplo 1</option>
+        <option value="ejemplo-2">Ejemplo 2</option>
+        <option value="ejemplo-3">Ejemplo 3</option>
+        <option value="ejemplo-4">Ejemplo 4</option>
+        <option value="ejemplo-5">Ejemplo 5</option>
+        <option value="ejemplo-6">Ejemplo 6</option>
+        <option value="ejemplo-7">Ejemplo 7</option>                                
+        <!-- Duplica líneas hasta ejemplo-n -->
+      </select>
+
+      <div class="spacer"></div>
+
+      <button class="btn" id="btnAR" type="button">VER EN AR</button>
+    </div>
+
+    <!-- VISOR -->
+    <section class="panel">
+      <div class="viewer-container">
+
+        <div class="tag-info" id="tag">EJEMPLO 1</div>
+
+
+        <model-viewer id="mv"
+          src="models/oclusion-real/ejemplo-1.glb"
+          ar
+          ar-modes="scene-viewer webxr quick-look"
+          camera-controls
+          tone-mapping="neutral"
+          shadow-intensity="0"
+          camera-orbit="35deg 65deg 2.2m";
+          camera-target="0m 0.1m 0m">
+        </model-viewer>
+      </div>
+
+      <!-- BOTONES INFERIORES (solo 3) -->
+      <div class="actions">
+        <button class="btn secondary" id="btnVistas" type="button">VISTAS</button>
+        <button class="btn secondary" id="btnReset" type="button">REINICIAR</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL QR (PC) -->
+  <div id="modalQR">
+    <div class="modal-content">
+      <button class="close" onclick="cerrarQR()" aria-label="Cerrar">&times;</button>
+      <h2>¡Escanea para abrir en tu celular!</h2>
+      <img id="imgQR" src="" alt="Código QR" style="width:220px; height:220px; border:6px solid #f1f5f9; border-radius:10px;">
+      <p>Abre el enlace desde tu celular para ver el modelo en Realidad Aumentada.</p>
+    </div>
+  </div>
+
+  <script>
+    const mv = document.getElementById('mv');
+    const selEjemplo = document.getElementById('selEjemplo');
+    const tag = document.getElementById('tag');
+    const ghostBox = document.getElementById('ghostBox');
+    const ghostImg = document.getElementById('ghostImg');
+
+    const btnVistas = document.getElementById('btnVistas');
+    const btnReset = document.getElementById('btnReset');
+    const btnAR = document.getElementById('btnAR');
+
+    const modalQR = document.getElementById('modalQR');
+    const imgQR = document.getElementById('imgQR');
+
+    const BASE = "models/oclusion-real/";
+
+    // Vistas predefinidas
+    const VISTAS = [
+      { name: "Frontal",  orbit: "0deg 75deg 2.2m",  target: "0m 0.1m 0m" },
+      { name: "Lateral",  orbit: "90deg 75deg 2.2m", target: "0m 0.1m 0m" },
+      { name: "Superior", orbit: "0deg 15deg 2.4m",  target: "0m 0.1m 0m" }
+    ];
+    let vistaIdx = 0;
+
+    const DEFAULT_ORBIT = "35deg 65deg 2.2m";
+    const DEFAULT_TARGET = "0m 0.1m 0m";
+
+    function labelFromKey(key){
+      return key.replace('-', ' ').toUpperCase();
+    }
+
+    function loadModel(key){
+      mv.src = `${BASE}${key}.glb`;
+      tag.textContent = labelFromKey(key);
+
+      // reset cámara
+      mv.cameraOrbit = DEFAULT_ORBIT;
+      mv.cameraTarget = DEFAULT_TARGET;
+
+      // reset vistas
+      vistaIdx = 0;
+    }
+
+    // Cambio de ejemplo
+    selEjemplo.addEventListener('change', () => loadModel(selEjemplo.value));
+
+    // Botón VISTAS: cicla Frontal → Lateral → Superior
+    btnVistas.addEventListener('click', () => {
+      const v = VISTAS[vistaIdx % VISTAS.length];
+      mv.cameraOrbit = v.orbit;
+      mv.cameraTarget = v.target;
+      vistaIdx++;
+    });
+
+    // Botón REINICIAR: vuelve a vista inicial consistente
+    btnReset.addEventListener('click', () => {
+      mv.cameraOrbit = DEFAULT_ORBIT;
+      mv.cameraTarget = DEFAULT_TARGET;
+      vistaIdx = 0;
+    });
+
+
+    // AR: móvil abre AR; PC muestra QR con la URL actual
+    function abrirAR(){
+      const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (esMovil) {
+        if (mv?.canActivateAR) mv.activateAR();
+        else alert("Tu dispositivo no es compatible con Realidad Aumentada.");
+      } else {
+        imgQR.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(window.location.href)}&color=0f172a`;
+        modalQR.style.display = 'flex';
+      }
+    }
+    btnAR.addEventListener('click', abrirAR);
+
+    function cerrarQR(){ modalQR.style.display = 'none'; }
+    window.cerrarQR = cerrarQR;
+
+    // Inicial
+    loadModel("ejemplo-1");
+
+    // Evita scroll con la rueda del mouse sobre el visor (PC)
+    mv.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+  </script>
+</body>
+</html>
