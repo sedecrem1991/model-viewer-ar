@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reto de Reconstrucción 3D - Dado</title>
+
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+  <style>
+    /* --- ESTILOS GENERALES (FONDO LIMPIO) --- */
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: transparent; color: #333; }
+    .wrap { padding: 20px; max-width: 1000px; margin: 0 auto; }
+
+    /* Barra superior */
+    .topbar {
+      display: flex; gap: 15px; align-items: center; margin-bottom: 20px;
+      background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0;
+      flex-wrap: wrap;
+    }
+
+    /* Etiqueta tipo “campo” (reemplaza select) */
+    .obj-label {
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: white;
+      color: #1e293b;
+      font-size: 16px;
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 180px;
+    }
+    .obj-label strong { white-space: nowrap; }
+    .obj-label span { font-weight: 700; }
+
+    /* --- ESTILO DE BOTONES (GRADIENTE LABORATORIO) --- */
+    .variant-btn, #btnAR {
+      background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      color: #ffffff; font-family: 'Arial Black', sans-serif;
+      text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.5px;
+      padding: 12px 20px; border: none; border-radius: 8px;
+      border-bottom: 3px solid #3b0764; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer; transition: all 0.2s ease;
+    }
+
+    .variant-btn:hover, #btnAR:hover {
+      filter: brightness(1.3); transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(59, 7, 100, 0.3);
+    }
+
+    .variant-btn:active, #btnAR:active {
+      transform: translateY(2px); border-bottom: 1px solid #3b0764;
+    }
+
+    /* Visor 3D */
+    model-viewer {
+      width: 100%; height: 55vh; background-color: #f1f5f9;
+      border-radius: 16px; margin-bottom: 20px;
+    }
+
+    .bar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+    #info {
+      margin-top: 20px; text-align: center; font-family: 'Segoe UI', sans-serif;
+      color: #64748b; font-size: 0.9em;
+    }
+
+    /* --- EXTRA RETO --- */
+    .viewer-shell { position: relative; }
+
+    .ghost-box {
+      position: absolute; top: 14px; right: 14px;
+      width: 180px; aspect-ratio: 1/1;
+      background: rgba(255,255,255,0.92);
+      border-radius: 14px; padding: 10px; z-index: 5;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      display: flex; flex-direction: column; align-items: center;
+      pointer-events: none;
+    }
+    .ghost-box img { width: 100%; height: 85%; object-fit: contain; }
+    .ghost-label {
+      font-size: 10px; font-weight: 900; color: #fff;
+      background: #334155; padding: 3px 10px; border-radius: 20px; margin-top: 6px;
+    }
+
+    @media (max-width: 600px) { .ghost-box { width: 120px; } }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <div class="topbar">
+      <div class="obj-label" aria-label="Objeto seleccionado">
+        <strong>OBJETO:</strong> <span>Dado</span>
+      </div>
+
+      <button id="btnAR" type="button">Ver en AR</button>
+
+      <!-- Modal QR -->
+      <div id="modalQR" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:white; padding:30px; border-radius:15px; text-align:center; max-width:300px; position:relative;">
+          <button onclick="cerrarQR()" style="position:absolute; top:10px; right:10px; border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
+          <h2 style="color:#1e1b4b; font-family:'Arial Black', sans-serif; font-size:1.2em; margin-bottom:15px;">¡Escanea para ver en RA!</h2>
+          <img id="imgQR" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=TU_URL_DE_GITHUB_AQUI" alt="QR Code" style="width:200px; height:200px; border:5px solid #f1f5f9;">
+          <p style="color:#64748b; font-size:0.9em; margin-top:15px;">Apunta con la cámara de tu celular para abrir el laboratorio.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="viewer-shell">
+      <div class="ghost-box">
+        <!-- Ajusta el nombre si tu guía objetivo se llama distinto -->
+        <img id="ghostImg" src="actividad-2/dado.png" alt="Guía objetivo">
+        <div class="ghost-label">OBJETIVO</div>
+      </div>
+
+      <model-viewer id="mv"
+        src="actividad-2/dado.glb"
+        ar
+        ar-modes="scene-viewer webxr quick-look"
+        camera-controls
+        tone-mapping="neutral"
+        shadow-intensity="1"
+        environment-image="legacy"
+        camera-orbit="35deg 65deg 2.32m"
+        camera-target="0m 0.3m 0m">
+      </model-viewer>
+    </div>
+
+    <div class="bar">
+      <button class="variant-btn" id="btnReset" type="button">Reiniciar vista</button>
+      <button class="variant-btn" id="btnValidar" type="button">Validar posición</button>
+    </div>
+
+    <div id="info">Ajusta la figura para que coincida con la imagen objetivo y presiona “Validar posición”.</div>
+
+    <!-- Modal Código (sin botón copiar) -->
+    <div id="modalCode" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.72); z-index:1100; align-items:center; justify-content:center;">
+      <div style="background:white; padding:22px; border-radius:15px; text-align:center; width:min(420px, 92vw); position:relative;">
+        <button id="btnCerrarCode" style="position:absolute; top:10px; right:10px; border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
+        <h2 style="margin:0; color:#1e1b4b; font-family:'Arial Black', sans-serif;">¡Logrado!</h2>
+        <p style="color:#64748b; margin:12px 0 8px;">Copia este código de verificación:</p>
+        <div id="codeBox" style="background:#0f172a; color:white; padding:14px; border-radius:12px; font-weight:900; font-family:'Arial Black', sans-serif; letter-spacing:1px; margin:10px 0 6px;">
+          DA-OK-06
+        </div>
+        <p style="color:#64748b; font-size:0.85em; margin:0;">(Selecciona el código y cópialo)</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // =========================
+    // CONFIGURACIÓN (SOLO DADO)
+    // =========================
+    const TARGET = { theta: 137, phi: 140, radius: 2.33, targetY: 0.07 };
+
+    // tolerancias
+    const TOL = { angle: 15, radius: 1.50, targetY: 0.50 };
+
+    // vista inicial (reinicio)
+    const START_ORBIT = "35deg 65deg 2.32m";
+    const START_TARGET = "0m 0.3m 0m";
+
+    // ✅ para que no cambie el código en cada clic
+    let codigoGenerado = null;
+
+    // =========================
+    // ELEMENTOS
+    // =========================
+    const mv = document.getElementById("mv");
+    const info = document.getElementById("info");
+
+    const modalQR = document.getElementById("modalQR");
+    const imgQR = document.getElementById("imgQR");
+
+    const modalCode = document.getElementById("modalCode");
+    const codeBox = document.getElementById("codeBox");
+
+    // =========================
+    // HELPERS
+    // =========================
+    const rad2deg = (r) => (r * 180 / Math.PI);
+
+    const norm360 = (deg) => {
+      let d = deg % 360;
+      if (d < 0) d += 360;
+      return d;
+    };
+
+    const angDiff = (a, b) => {
+      // diferencia mínima en grados (0..180)
+      return Math.abs(((a - b + 180) % 360) - 180);
+    };
+
+    function setStatus(html) {
+      info.innerHTML = html;
+    }
+
+    function cerrarQR() { modalQR.style.display = "none"; }
+
+    function abrirCodeModal(codeText) {
+      codeBox.textContent = codeText;
+      modalCode.style.display = "flex";
+    }
+
+    function cerrarCodeModal() {
+      modalCode.style.display = "none";
+    }
+
+    // =========================
+    // VALIDACIÓN
+    // =========================
+    document.getElementById("btnValidar").addEventListener("click", () => {
+      const orbit = mv.getCameraOrbit();
+      const camTarget = mv.getCameraTarget();
+
+      const curTheta = norm360(rad2deg(orbit.theta));
+      const curPhi = rad2deg(orbit.phi);
+
+      const dTheta = angDiff(curTheta, TARGET.theta);
+      const dPhi = Math.abs(curPhi - TARGET.phi);
+      const dRadius = Math.abs(Number(orbit.radius) - TARGET.radius);
+      const dY = Math.abs(Number(camTarget.y) - TARGET.targetY);
+
+      const ok =
+        (dTheta <= TOL.angle) &&
+        (dPhi   <= TOL.angle) &&
+        (dRadius<= TOL.radius) &&
+        (dY     <= TOL.targetY);
+
+      if (ok) {
+        // ✅ genera una sola vez y luego reutiliza
+        // Pares entre 5 y 10 => 6, 8, 10
+        if (!codigoGenerado) {
+          const even = 2 * (Math.floor(Math.random() * 3) + 3); // 6/8/10
+          const randomCode = String(even).padStart(2, "0");      // "06"/"08"/"10"
+          codigoGenerado = `DA-OK-${randomCode}`;
+        }
+
+        abrirCodeModal(codigoGenerado);
+        setStatus('✅ <strong>¡Excelente! Posición correcta.</strong>');
+      } else {
+        setStatus('❌ <strong>Aún no coincide.</strong> Ajusta ángulo/zoom y vuelve a intentar.');
+      }
+    });
+
+    document.getElementById("btnCerrarCode").addEventListener("click", cerrarCodeModal);
+
+    // =========================
+    // REINICIAR
+    // =========================
+    document.getElementById("btnReset").addEventListener("click", () => {
+      codigoGenerado = null; // ✅ permite un nuevo código tras reiniciar
+
+      mv.setAttribute("camera-orbit", START_ORBIT);
+      mv.setAttribute("camera-target", START_TARGET);
+
+      // por compatibilidad extra
+      mv.cameraOrbit = START_ORBIT;
+      mv.cameraTarget = START_TARGET;
+
+      setStatus("Vista reiniciada. Ahora ajusta la figura y valida.");
+    });
+
+    // =========================
+    // VER EN AR
+    // =========================
+    document.getElementById("btnAR").addEventListener("click", () => {
+      const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (esMovil) {
+        if (mv.canActivateAR) mv.activateAR();
+        else alert("Tu móvil no es compatible con Realidad Aumentada.");
+      } else {
+        const urlActual = window.location.href;
+        imgQR.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(urlActual)}&color=0f172a`;
+        modalQR.style.display = "flex";
+      }
+    });
+  </script>
+</body>
+</html>
