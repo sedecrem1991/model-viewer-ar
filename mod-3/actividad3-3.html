@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Laboratorio RA - Oclusión Real</title>
+  <title>Laboratorio RA - Oclusión</title>
 
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
@@ -70,42 +70,6 @@
       touch-action: none;
     }
 
-    /* Guía (visor pequeño) en esquina superior derecha */
-    .ghost-box{
-      position:absolute;
-      top: 14px;
-      right: 14px;
-      width: 180px;
-      aspect-ratio: 1/1;
-      background: rgba(255,255,255,0.92);
-      border: 1px solid rgba(0,0,0,0.06);
-      border-radius: 14px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-      display:flex;
-      flex-direction: column;
-      align-items:center;
-      padding: 10px;
-      z-index: 10;
-      backdrop-filter: blur(4px);
-    }
-    .ghost-box img{
-      width:100%;
-      height: 85%;
-      object-fit: contain;
-    }
-    .ghost-label{
-      font-size: 10px;
-      font-weight: 900;
-      color: #ffffff;
-      background: #334155;
-      padding: 3px 10px;
-      border-radius: 20px;
-      margin-top: 6px;
-      text-transform: uppercase;
-      letter-spacing: .4px;
-    }
-    .ghost-box.hidden{ display:none; }
-
     /* Estado (etiqueta) esquina superior izquierda */
     .tag-info{
       position:absolute;
@@ -128,19 +92,49 @@
     }
 
     /* Modal QR (PC) */
-    #modalQR { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; }
-    .modal-content { background:white; padding:26px; border-radius:15px; text-align:center; max-width:340px; position:relative; }
-    .modal-content h2{ margin: 0 0 10px 0; color:#1e1b4b; font-family:'Arial Black', sans-serif; font-size: 1.1em; }
-    .modal-content p{ margin: 10px 0 0 0; color:#64748b; font-size:0.9em; line-height: 1.3em; }
+    #modalQR {
+      display:none;
+      position:fixed;
+      top:0; left:0;
+      width:100%; height:100%;
+      background:rgba(0,0,0,0.8);
+      z-index:1000;
+      align-items:center;
+      justify-content:center;
+    }
+    .modal-content {
+      background:white;
+      padding:26px;
+      border-radius:15px;
+      text-align:center;
+      max-width:340px;
+      position:relative;
+    }
+    .modal-content h2{
+      margin: 0 0 10px 0;
+      color:#1e1b4b;
+      font-family:'Arial Black', sans-serif;
+      font-size: 1.1em;
+    }
+    .modal-content p{
+      margin: 10px 0 0 0;
+      color:#64748b;
+      font-size:0.9em;
+      line-height: 1.3em;
+    }
     .close{
-      position:absolute; top:10px; right:10px; border:none; background:none;
-      font-size:22px; cursor:pointer; color:#0f172a;
+      position:absolute;
+      top:10px; right:10px;
+      border:none;
+      background:none;
+      font-size:22px;
+      cursor:pointer;
+      color:#0f172a;
     }
 
     @media (max-width: 900px){
       .viewer-container{ height: 46vh; }
       select{ min-width: 180px; }
-      .ghost-box{ width: 150px; }
     }
   </style>
 </head>
@@ -157,8 +151,8 @@
         <option value="ejercicio2">Ejercicio 2</option>
         <option value="ejercicio3">Ejercicio 3</option>
         <option value="ejercicio4">Ejercicio 4</option>
-        <option value="ejercicio5">Ejercicio 5</option>                            
-        <!-- Duplica líneas hasta ejemplo-n -->
+        <option value="ejercicio5">Ejercicio 5</option>
+        <!-- Duplica líneas hasta ejercicioN -->
       </select>
 
       <div class="spacer"></div>
@@ -169,9 +163,7 @@
     <!-- VISOR -->
     <section class="panel">
       <div class="viewer-container">
-
         <div class="tag-info" id="tag">Ejercicio 1</div>
-
 
         <model-viewer id="mv"
           src="actividad3-3/ejercicio1.glb"
@@ -180,12 +172,12 @@
           camera-controls
           tone-mapping="neutral"
           shadow-intensity="0"
-          camera-orbit="35deg 65deg 2.2m";
+          camera-orbit="35deg 65deg 2.2m"
           camera-target="0m 0.1m 0m">
         </model-viewer>
       </div>
 
-      <!-- BOTONES INFERIORES (solo 3) -->
+      <!-- BOTONES INFERIORES (solo 2) -->
       <div class="actions">
         <button class="btn secondary" id="btnVistas" type="button">VISTAS</button>
         <button class="btn secondary" id="btnReset" type="button">REINICIAR</button>
@@ -207,8 +199,6 @@
     const mv = document.getElementById('mv');
     const selEjemplo = document.getElementById('selEjemplo');
     const tag = document.getElementById('tag');
-    const ghostBox = document.getElementById('ghostBox');
-    const ghostImg = document.getElementById('ghostImg');
 
     const btnVistas = document.getElementById('btnVistas');
     const btnReset = document.getElementById('btnReset');
@@ -231,7 +221,8 @@
     const DEFAULT_TARGET = "0m 0.1m 0m";
 
     function labelFromKey(key){
-      return key.replace('-', ' ').toUpperCase();
+      const m = key.match(/^ejercicio(\d+)$/i);
+      return m ? `Ejercicio ${m[1]}` : key;
     }
 
     function loadModel(key){
@@ -264,7 +255,6 @@
       vistaIdx = 0;
     });
 
-
     // AR: móvil abre AR; PC muestra QR con la URL actual
     function abrirAR(){
       const esMovil = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -272,7 +262,8 @@
         if (mv?.canActivateAR) mv.activateAR();
         else alert("Tu dispositivo no es compatible con Realidad Aumentada.");
       } else {
-        imgQR.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(window.location.href)}&color=0f172a`;
+        imgQR.src =
+          `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(window.location.href)}&color=0f172a`;
         modalQR.style.display = 'flex';
       }
     }
@@ -281,8 +272,12 @@
     function cerrarQR(){ modalQR.style.display = 'none'; }
     window.cerrarQR = cerrarQR;
 
-    // Inicial
-    loadModel("Ejercicio 1");
+    // Diagnóstico útil (consola)
+    mv.addEventListener('load', () => console.log('Modelo cargado:', mv.src));
+    mv.addEventListener('error', (e) => console.error('model-viewer error:', e));
+
+    // Inicial: carga el que está seleccionado
+    loadModel(selEjemplo.value);
 
     // Evita scroll con la rueda del mouse sobre el visor (PC)
     mv.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
